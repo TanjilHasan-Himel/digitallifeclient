@@ -1,33 +1,36 @@
-import { useEffect, useState } from "react";
-import { axiosSecure } from "../api/axiosSecure";
-import { useAuth } from "../providers/AuthProvider";
+import { useCallback, useEffect, useState } from "react";
+import axiosSecure from "../api/axiosSecure";
 
-export default function useSyncUser() {
-  const { user } = useAuth();
-  const [dbUser, setDbUser] = useState(null);
+export default function useSyncUser(user) {
+  const [me, setMe] = useState(null);
+  const [meLoading, setMeLoading] = useState(true);
 
-  useEffect(() => {
-    const run = async () => {
-      if (!user) {
-        setDbUser(null);
-        return;
-      }
+  const refetchMe = useCallback(async () => {
+    if (!user) {
+      setMe(null);
+      setMeLoading(false);
+      return;
+    }
 
-      // upsert
-      await axiosSecure.post("/users/upsert", {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName,
-        photoURL: user.photoURL,
-      });
+    setMeLoading(true);
 
-      // fetch me
-      const res = await axiosSecure.get("/users/me");
-      setDbUser(res.data);
-    };
+    // 1) Upsert
+    await axiosSecure.post("/users/upsert", {
+      uid: user.uid,
+      email: user.email,
+      name: user.displayName || "User",
+      photoURL: user.photoURL || "",
+    });
 
-    run().catch(console.error);
+    // 2) Get me
+    const { data } = await axiosSecure.get("/users/me");
+    setMe(data);
+    setMeLoading(false);
   }, [user]);
 
-  return { dbUser };
+  useEffect(() => {
+    refetchMe().catch(() => setMeLoading(false));
+  }, [refetchMe]);
+
+  return { me, meLoading, refetchMe };
 }

@@ -1,47 +1,47 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
-  getAuth,
-  onAuthStateChanged,
-  signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
   GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
+  signOut,
   updateProfile,
 } from "firebase/auth";
-
-import { app } from "../firebase/firebase.config";
-import LoadingSpinner from "../components/shared/LoadingSpinner";
+import { auth } from "../firebase/firebase.config";
+import useSyncUser from "../hooks/useSyncUser";
 
 const AuthContext = createContext(null);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  const { me, meLoading, refetchMe } = useSyncUser(user);
+
+  const googleProvider = new GoogleAuthProvider();
+
   const createUser = async (email, password) => {
     setAuthLoading(true);
-    const res = await createUserWithEmailAndPassword(auth, email, password);
-    return res;
+    return createUserWithEmailAndPassword(auth, email, password);
   };
 
   const loginUser = async (email, password) => {
     setAuthLoading(true);
-    const res = await signInWithEmailAndPassword(auth, email, password);
-    return res;
+    return signInWithEmailAndPassword(auth, email, password);
   };
 
   const googleLogin = async () => {
     setAuthLoading(true);
-    const res = await signInWithPopup(auth, googleProvider);
-    return res;
+    return signInWithPopup(auth, googleProvider);
   };
 
   const updateUserProfile = async (name, photoURL) => {
-    if (!auth.currentUser) return;
-    await updateProfile(auth.currentUser, { displayName: name, photoURL });
+    return updateProfile(auth.currentUser, { displayName: name, photoURL });
   };
 
   const logout = async () => {
@@ -51,25 +51,35 @@ export default function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (current) => {
-      setUser(current || null);
+      setUser(current);
       setAuthLoading(false);
     });
     return () => unsub();
   }, []);
 
-  const value = {
-    user,
-    authLoading,
-    createUser,
-    loginUser,
-    googleLogin,
-    updateUserProfile,
-    logout,
-  };
+  // DEV helper: console থেকে token বের করতে চাইলে
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      window.__getIdToken = async () => auth.currentUser?.getIdToken();
+    }
+  }, []);
 
-  if (authLoading) return <LoadingSpinner label="Checking session..." />;
+  const value = useMemo(
+    () => ({
+      user,
+      me, // Mongo user: role + isPremium
+      loading: authLoading || meLoading,
+      createUser,
+      loginUser,
+      googleLogin,
+      updateUserProfile,
+      logout,
+      refetchMe,
+      isPremium: !!me?.isPremium,
+      role: me?.role || "user",
+    }),
+    [user, me, authLoading, meLoading]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-export const useAuth = () => useContext(AuthContext);

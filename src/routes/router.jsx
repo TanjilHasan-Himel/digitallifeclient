@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import PrivateRoute from "./PrivateRoute";
@@ -28,6 +28,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "public-lessons", element: <PublicLessons /> },
+
       {
         path: "lesson/:id",
         element: (
@@ -36,6 +37,11 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+
+      // ✅ Navbar যদি /pricing এ যায়, এখানে redirect করে দাও
+      { path: "pricing", element: <Navigate to="/pricing/upgrade" replace /> },
+
+      // ✅ তোমার আগের protected upgrade route
       {
         path: "pricing/upgrade",
         element: (
@@ -44,6 +50,7 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+
       { path: "payment/success", element: <PaymentSuccess /> },
       { path: "payment/cancel", element: <PaymentCancel /> },
       { path: "login", element: <Login /> },
@@ -51,7 +58,7 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Dashboard (protected)
+  // Dashboard (protected) + Navbar/Footer থাকবে (কারণ MainLayout)
   {
     path: "/dashboard",
     element: (
@@ -66,8 +73,16 @@ const router = createBrowserRouter([
           { index: true, element: <DashboardHome /> },
           { path: "add-lesson", element: <AddLesson /> },
           { path: "my-lessons", element: <MyLessons /> },
+
+          // ✅ Update route (dynamic id)
           { path: "update-lesson/:id", element: <UpdateLesson /> },
+
+          // ✅ Sidebar এ যেটা আছে (main)
           { path: "my-favorites", element: <Favorites /> },
+
+          // ✅ Navbar যদি /dashboard/favorites এ যায়, redirect করে my-favorites এ পাঠাও
+          { path: "favorites", element: <Navigate to="/dashboard/my-favorites" replace /> },
+
           { path: "profile", element: <Profile /> },
         ],
       },

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useEffect, useMemo, useState } from "react";
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -13,18 +13,15 @@ import axiosSecure from "../api/axiosSecure";
 
 export const AuthContext = createContext(null);
 
-// ✅ named export for safety (so { useAuth } imports won't break)
-export const useAuth = () => useContext(AuthContext);
-
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [me, setMe] = useState(null); // Mongo user: role, isPremium etc
+  const [me, setMe] = useState(null); // mongo user: role, isPremium
   const [loading, setLoading] = useState(true);
 
   const syncMongoUser = async (fbUser) => {
     if (!fbUser?.uid || !fbUser?.email) return;
 
-    // 1) upsert
+    // upsert
     await axiosSecure.post("/users/upsert", {
       uid: fbUser.uid,
       email: fbUser.email,
@@ -32,7 +29,7 @@ export default function AuthProvider({ children }) {
       photoURL: fbUser.photoURL || "",
     });
 
-    // 2) fetch /users/me
+    // fetch me
     const { data } = await axiosSecure.get("/users/me");
     setMe(data);
   };
@@ -51,7 +48,7 @@ export default function AuthProvider({ children }) {
         setLoading(true);
         await syncMongoUser(currentUser);
       } catch (err) {
-        console.error("AuthProvider sync error:", err?.message);
+        console.error("Auth sync error:", err?.message);
         setMe(null);
       } finally {
         setLoading(false);
@@ -61,48 +58,30 @@ export default function AuthProvider({ children }) {
     return () => unsub();
   }, []);
 
-  // ---------- Auth actions ----------
+  // actions
   const registerUser = async (email, password, name) => {
     setLoading(true);
-    try {
-      const res = await createUserWithEmailAndPassword(auth, email, password);
-      if (name) await updateProfile(res.user, { displayName: name });
-      // onAuthStateChanged will sync
-      return res;
-    } finally {
-      setLoading(false);
-    }
+    const res = await createUserWithEmailAndPassword(auth, email, password);
+    if (name) await updateProfile(res.user, { displayName: name });
+    return res;
   };
 
   const loginUser = async (email, password) => {
     setLoading(true);
-    try {
-      const res = await signInWithEmailAndPassword(auth, email, password);
-      return res;
-    } finally {
-      setLoading(false);
-    }
+    return await signInWithEmailAndPassword(auth, email, password);
   };
 
   const loginWithGoogle = async () => {
     setLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      const res = await signInWithPopup(auth, provider);
-      return res;
-    } finally {
-      setLoading(false);
-    }
+    const provider = new GoogleAuthProvider();
+    return await signInWithPopup(auth, provider);
   };
 
   const logoutUser = async () => {
     setLoading(true);
-    try {
-      await signOut(auth);
-      setMe(null);
-    } finally {
-      setLoading(false);
-    }
+    await signOut(auth);
+    setMe(null);
+    setLoading(false);
   };
 
   const refreshMe = async () => {

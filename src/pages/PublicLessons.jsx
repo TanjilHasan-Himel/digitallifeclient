@@ -1,9 +1,12 @@
 // client/src/pages/PublicLessons.jsx
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axiosSecure from "../api/axiosSecure";
 import useTitle from "../hooks/useTitle";
+
+
 
 export default function PublicLessons() {
   useTitle("Public Lessons");

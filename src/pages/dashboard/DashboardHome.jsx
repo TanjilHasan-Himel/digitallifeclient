@@ -1,13 +1,9 @@
-import useTitle from "../../hooks/useTitle";
-
 export default function DashboardHome() {
-  useTitle("Dashboard");
-
   return (
-    <div>
-      <h1 className="text-2xl font-extrabold text-slate-900">Dashboard Overview</h1>
-      <p className="mt-2 text-slate-600">
-        Router is working ✅ Next: Firebase Auth + Mongo Sync + Lessons CRUD.
+    <div className="bg-white border rounded-2xl p-6">
+      <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+      <p className="text-slate-600 mt-2">
+        Router is working ✅ Next: Lessons CRUD + Favorites + Comments.
       </p>
     </div>
   );

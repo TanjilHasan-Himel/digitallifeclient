@@ -1,97 +1,110 @@
-import { NavLink, Link } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../providers/AuthProvider";
-
-const navClass = ({ isActive }) =>
-  `px-3 py-2 rounded-lg text-sm font-medium transition ${
-    isActive ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"
-  }`;
+import toast from "react-hot-toast";
+import { useEffect, useRef, useState } from "react";
+import { axiosSecure } from "../../api/axiosSecure";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [me, setMe] = useState(null);
+  const ref = useRef(null);
+  const navigate = useNavigate();
+
+  // fetch plan from mongo (single source of truth)
+  useEffect(() => {
+    const run = async () => {
+      if (!user) return setMe(null);
+      const res = await axiosSecure.get("/users/me");
+      setMe(res.data);
+    };
+    run().catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out ✅");
+      navigate("/");
+    } catch (e) {
+      toast.error("Logout failed");
+    }
+  };
+
+  const isPremium = !!me?.isPremium;
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/85 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
-        {/* Brand */}
+    <header className="border-b bg-white">
+      <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Digital Life Lessons"
-            className="h-10 w-10 rounded-xl object-cover"
-          />
+          <img src="/logo.png" alt="Digital Life Lessons" className="w-10 h-10 rounded-xl" />
           <div className="leading-tight">
-            <p className="font-extrabold text-slate-900 tracking-tight">
-              Digital Life Lessons
-            </p>
-            <p className="text-xs text-slate-500">Learn. Reflect. Grow.</p>
+            <h1 className="font-extrabold">Digital Life Lessons</h1>
+            <p className="text-xs text-gray-500">Learn. Reflect. Grow.</p>
           </div>
         </Link>
 
-        {/* Links */}
-        <nav className="hidden md:flex items-center gap-2">
-          <NavLink to="/" className={navClass} end>Home</NavLink>
-          <NavLink to="/public-lessons" className={navClass}>Public Lessons</NavLink>
-          <NavLink to="/dashboard/add-lesson" className={navClass}>Add Lesson</NavLink>
-          <NavLink to="/dashboard/my-lessons" className={navClass}>My Lessons</NavLink>
-          <NavLink to="/pricing/upgrade" className={navClass}>Upgrade</NavLink>
+        <nav className="hidden md:flex items-center gap-4 text-sm">
+          <NavLink to="/" className={({ isActive }) => (isActive ? "font-bold" : "text-gray-600")}>Home</NavLink>
+          <NavLink to="/public-lessons" className={({ isActive }) => (isActive ? "font-bold" : "text-gray-600")}>Public Lessons</NavLink>
+
+          {user && (
+            <>
+              <NavLink to="/dashboard/add-lesson" className={({ isActive }) => (isActive ? "font-bold" : "text-gray-600")}>Add Lesson</NavLink>
+              <NavLink to="/dashboard/my-lessons" className={({ isActive }) => (isActive ? "font-bold" : "text-gray-600")}>My Lessons</NavLink>
+
+              {!isPremium ? (
+                <NavLink to="/pricing" className={({ isActive }) => (isActive ? "font-bold" : "text-gray-600")}>Upgrade</NavLink>
+              ) : (
+                <span className="text-xs px-2 py-1 rounded-full bg-black text-white">Premium ⭐</span>
+              )}
+            </>
+          )}
         </nav>
 
-        {/* Right */}
-        <div className="flex items-center gap-2">
-          {!user ? (
-            <div className="flex items-center gap-2">
-              <Link to="/login" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">
-                Login
-              </Link>
-              <Link to="/register" className="px-3 py-2 rounded-lg text-sm font-semibold bg-slate-900 text-white hover:opacity-95">
-                Signup
-              </Link>
-            </div>
-          ) : (
-            <div className="relative group">
-              <button className="flex items-center gap-2 rounded-full border px-2 py-1 hover:bg-slate-50">
-                <img
-                  src={user?.photoURL || "/logo.png"}
-                  alt="User"
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-                <span className="hidden md:inline text-sm font-semibold text-slate-800">
-                  {user?.displayName?.split(" ")[0] || "User"}
-                </span>
-              </button>
+        {!user ? (
+          <div className="flex items-center gap-2">
+            <Link to="/login" className="px-3 py-2 text-sm rounded-xl border hover:bg-gray-50">Login</Link>
+            <Link to="/register" className="px-3 py-2 text-sm rounded-xl bg-black text-white hover:opacity-90">Signup</Link>
+          </div>
+        ) : (
+          <div className="relative" ref={ref}>
+            <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2">
+              <img
+                src={user.photoURL || "/logo.png"}
+                alt="avatar"
+                className="w-10 h-10 rounded-full border object-cover"
+              />
+            </button>
 
-              {/* dropdown */}
-              <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition absolute right-0 mt-2 w-56 rounded-2xl border bg-white shadow-lg p-2">
+            {open && (
+              <div className="absolute right-0 mt-2 w-56 rounded-2xl border bg-white shadow-lg p-2">
                 <div className="px-3 py-2">
-                  <p className="text-sm font-bold text-slate-900 truncate">
-                    {user?.displayName || "Logged In"}
-                  </p>
-                  <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                  <p className="font-semibold text-sm">{user.displayName || "User"}</p>
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
                 </div>
-                <div className="h-px bg-slate-100 my-1" />
-                <Link to="/dashboard/profile" className="block px-3 py-2 rounded-lg text-sm hover:bg-slate-50">
+                <div className="h-px bg-gray-100 my-1" />
+                <Link to="/dashboard/profile" className="block px-3 py-2 rounded-xl hover:bg-gray-50 text-sm" onClick={() => setOpen(false)}>
                   Profile
                 </Link>
-                <Link to="/dashboard" className="block px-3 py-2 rounded-lg text-sm hover:bg-slate-50">
+                <Link to="/dashboard" className="block px-3 py-2 rounded-xl hover:bg-gray-50 text-sm" onClick={() => setOpen(false)}>
                   Dashboard
                 </Link>
-                <button
-                  onClick={logout}
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50"
-                >
-                  Logout
+                <button onClick={handleLogout} className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 text-sm">
+                  Log out
                 </button>
               </div>
-            </div>
-          )}
-
-          {/* Mobile menu hint */}
-          <div className="md:hidden">
-            <Link to="/public-lessons" className="px-3 py-2 rounded-lg text-sm font-semibold bg-slate-900 text-white">
-              Explore
-            </Link>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </header>
   );

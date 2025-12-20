@@ -1,10 +1,9 @@
 import { Link, NavLink } from "react-router-dom";
-import useAuth from "../../hooks/useAuth";
+import { useAuth } from "../../providers/AuthProvider";
 import Avatar from "../shared/Avatar";
 
-
 export default function Navbar() {
-  const { user, me, logoutUser, loading } = useAuth();
+  const { user, me, logout, loading } = useAuth();
 
   const isPremium = !!me?.isPremium;
 
@@ -18,7 +17,11 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          <img src="/logo.png" alt="Digital Life Lessons" className="h-8 w-8 rounded" />
+          <img
+            src="/logo.png"
+            alt="Digital Life Lessons"
+            className="h-8 w-8 rounded"
+          />
           <div className="leading-tight">
             <p className="font-semibold text-slate-900">Digital Life Lessons</p>
             <p className="text-xs text-slate-500">Learn. Reflect. Grow.</p>
@@ -30,11 +33,12 @@ export default function Navbar() {
           <NavLink to="/" className={navLinkClass}>
             Home
           </NavLink>
+
           <NavLink to="/public-lessons" className={navLinkClass}>
             Public Lessons
           </NavLink>
 
-          {/* Dashboard links (only when logged in) */}
+          {/* Dashboard links only when logged in */}
           {user && (
             <>
               <NavLink to="/dashboard/add-lesson" className={navLinkClass}>
@@ -60,7 +64,10 @@ export default function Navbar() {
             <span className="text-sm text-slate-500">Loading...</span>
           ) : user ? (
             <div className="flex items-center gap-3">
-              <Link to="/dashboard/profile" className="flex items-center gap-2">
+              <Link
+                to="/dashboard/profile"
+                className="flex items-center gap-2"
+              >
                 <Avatar src={user?.photoURL} alt={user?.displayName || "User"} />
                 <span className="hidden sm:block text-sm text-slate-700">
                   {user?.displayName || "User"}
@@ -68,7 +75,7 @@ export default function Navbar() {
               </Link>
 
               <button
-                onClick={logoutUser}
+                onClick={logout}
                 className="px-4 py-2 rounded-lg text-sm font-semibold border hover:bg-slate-100"
               >
                 Logout

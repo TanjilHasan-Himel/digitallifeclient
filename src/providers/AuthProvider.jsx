@@ -1,4 +1,5 @@
-import { createContext, useEffect, useMemo, useState, useContext } from "react";
+// client/src/providers/AuthProvider.jsx
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -11,71 +12,97 @@ import {
 import { auth } from "../firebase/firebase.config";
 import axiosSecure from "../api/axiosSecure";
 
-export const AuthContext = createContext(null);
+const AuthContext = createContext(null);
 
-// ✅ this is what your PrivateRoute expects
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider/>");
+  return ctx;
+}
 
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [me, setMe] = useState(null); // mongo user: role + isPremium
-  const [loading, setLoading] = useState(true);
+  const [me, setMe] = useState(null); // Mongo user doc (role + isPremium etc)
+  const [loading, setLoading] = useState(true); // auth loading
+  const [meLoading, setMeLoading] = useState(false); // /users/me loading
 
   const googleProvider = useMemo(() => new GoogleAuthProvider(), []);
 
-  const createUser = (email, password) =>
-    createUserWithEmailAndPassword(auth, email, password);
-
-  const loginUser = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password);
-
-  const googleLogin = () => signInWithPopup(auth, googleProvider);
-
-  const updateUserProfile = async (name, photoURL) => {
-    if (!auth.currentUser) return;
-    await updateProfile(auth.currentUser, {
-      displayName: name || auth.currentUser.displayName,
-      photoURL: photoURL || auth.currentUser.photoURL,
+  const createUser = async (email, password, name, photoURL = "") => {
+    setLoading(true);
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    // profile update
+    await updateProfile(result.user, {
+      displayName: name || "User",
+      photoURL: photoURL || "",
     });
-    setUser({ ...auth.currentUser });
+    setLoading(false);
+    return result;
+  };
+
+  const loginUser = async (email, password) => {
+    setLoading(true);
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    setLoading(false);
+    return result;
+  };
+
+  const googleLogin = async () => {
+    setLoading(true);
+    const result = await signInWithPopup(auth, googleProvider);
+    setLoading(false);
+    return result;
   };
 
   const logoutUser = async () => {
     setLoading(true);
     await signOut(auth);
-    setUser(null);
     setMe(null);
+    setUser(null);
     setLoading(false);
   };
 
-  const syncMongoUser = async (firebaseUser) => {
-    const payload = {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-      name: firebaseUser.displayName || "User",
-      photoURL: firebaseUser.photoURL || "",
-    };
-
-    await axiosSecure.post("/users/upsert", payload);
-    const res = await axiosSecure.get("/users/me");
-    setMe(res.data);
+  const refreshMe = async () => {
+    if (!auth.currentUser) return;
+    try {
+      setMeLoading(true);
+      const { data } = await axiosSecure.get("/users/me");
+      setMe(data);
+    } catch (e) {
+      setMe(null);
+    } finally {
+      setMeLoading(false);
+    }
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setLoading(true);
-      setUser(currentUser);
+      setUser(currentUser || null);
+
+      if (!currentUser) {
+        setMe(null);
+        setLoading(false);
+        return;
+      }
 
       try {
-        if (currentUser) {
-          await syncMongoUser(currentUser);
-        } else {
-          setMe(null);
-        }
+        setMeLoading(true);
+
+        // Upsert user in Mongo (server reads uid/email from token, but we also send body for name/photo)
+        await axiosSecure.post("/users/upsert", {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          name: currentUser.displayName || "User",
+          photoURL: currentUser.photoURL || "",
+        });
+
+        // Fetch mongo user (role + isPremium)
+        const { data } = await axiosSecure.get("/users/me");
+        setMe(data);
       } catch (err) {
-        console.log("AUTH_SYNC_ERROR:", err?.message);
         setMe(null);
       } finally {
+        setMeLoading(false);
         setLoading(false);
       }
     });
@@ -83,16 +110,19 @@ export default function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  const authInfo = {
+  const value = {
     user,
     me,
     loading,
+    meLoading,
     createUser,
     loginUser,
     googleLogin,
-    updateUserProfile,
     logoutUser,
+    refreshMe,
+    isPremium: !!me?.isPremium,
+    role: me?.role || "user",
   };
 
-  return <AuthContext.Provider value={authInfo}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

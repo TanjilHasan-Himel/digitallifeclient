@@ -1,36 +1,45 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axiosSecure from "../api/axiosSecure";
 
 export default function useSyncUser(user) {
   const [me, setMe] = useState(null);
-  const [meLoading, setMeLoading] = useState(true);
-
-  const refetchMe = useCallback(async () => {
-    if (!user) {
-      setMe(null);
-      setMeLoading(false);
-      return;
-    }
-
-    setMeLoading(true);
-
-    // 1) Upsert
-    await axiosSecure.post("/users/upsert", {
-      uid: user.uid,
-      email: user.email,
-      name: user.displayName || "User",
-      photoURL: user.photoURL || "",
-    });
-
-    // 2) Get me
-    const { data } = await axiosSecure.get("/users/me");
-    setMe(data);
-    setMeLoading(false);
-  }, [user]);
+  const [loadingMe, setLoadingMe] = useState(true);
 
   useEffect(() => {
-    refetchMe().catch(() => setMeLoading(false));
-  }, [refetchMe]);
+    let alive = true;
 
-  return { me, meLoading, refetchMe };
+    const run = async () => {
+      try {
+        setLoadingMe(true);
+        if (!user?.uid) {
+          if (alive) setMe(null);
+          return;
+        }
+
+        // 1) upsert
+        await axiosSecure.post("/users/upsert", {
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName || "User",
+          photoURL: user.photoURL || "",
+        });
+
+        // 2) get me
+        const res = await axiosSecure.get("/users/me");
+        if (alive) setMe(res.data);
+      } catch (e) {
+        if (alive) setMe(null);
+        // optional: console.log(e?.response?.data || e.message);
+      } finally {
+        if (alive) setLoadingMe(false);
+      }
+    };
+
+    run();
+    return () => {
+      alive = false;
+    };
+  }, [user?.uid]); // ✅ only when user changes
+
+  return { me, loadingMe };
 }

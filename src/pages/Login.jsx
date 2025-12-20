@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../providers/AuthProvider";
-import { axiosSecure } from "../api/axiosSecure";
+import axiosSecure from "../api/axiosSecure";
+
 import useTitle from "../hooks/useTitle";
 import { FaGoogle } from "react-icons/fa";
 

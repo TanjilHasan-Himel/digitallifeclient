@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import useTitle from "../hooks/useTitle";
 import { useAuth } from "../providers/AuthProvider";
-import { axiosSecure } from "../api/axiosSecure";
+import axiosSecure from "../api/axiosSecure";
+
 
 export default function Register() {
   useTitle("Register | Digital Life Lessons");

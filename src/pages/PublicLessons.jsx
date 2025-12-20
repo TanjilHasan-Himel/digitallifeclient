@@ -1,164 +1,191 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { axiosPublic } from "../api/axiosSecure";
+// client/src/pages/PublicLessons.jsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import axiosSecure from "../api/axiosSecure";
 import useTitle from "../hooks/useTitle";
-import LoadingSpinner from "../components/shared/LoadingSpinner";
 
 export default function PublicLessons() {
   useTitle("Public Lessons");
-  const { isPremium } = useAuth();
+  const { me } = useAuth();
+  const navigate = useNavigate();
 
-  const categories = useMemo(
-    () => ["", "Productivity", "Mindset", "Career", "Relationships", "Communication", "Health", "Finance", "Learning"],
-    []
-  );
-  const tones = useMemo(() => ["", "Motivational", "Reflective", "Practical", "Calm", "Honest", "Empathetic"], []);
-
+  const [items, setItems] = useState([]);
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
   const [tone, setTone] = useState("");
   const [sort, setSort] = useState("newest");
-
   const [page, setPage] = useState(1);
-  const limit = 9;
+  const [meta, setMeta] = useState({ pages: 1 });
 
-  const [data, setData] = useState({ items: [], totalPages: 1 });
-  const [loading, setLoading] = useState(true);
+  const isPremiumUser = !!me?.isPremium;
 
-  const fetchLessons = async () => {
-    setLoading(true);
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(limit),
-      q,
-      category,
-      tone,
-      sort,
-    });
+  useEffect(() => {
+    let ignore = false;
 
-    const res = await axiosPublic.get(`/lessons/public?${params.toString()}`);
-    setData(res.data);
-    setLoading(false);
+    (async () => {
+      const { data } = await axiosSecure.get("/lessons/public", {
+        params: { q, category, tone, sort, page, limit: 6 },
+      });
+
+      if (!ignore) {
+        setItems(data?.items || []);
+        setMeta({ pages: data?.pages || 1 });
+      }
+    })().catch(console.error);
+
+    return () => (ignore = true);
+  }, [q, category, tone, sort, page]);
+
+  const canOpen = (lesson) => {
+    if (lesson?.accessLevel !== "Premium") return true;
+    return isPremiumUser;
   };
-
-  useEffect(() => {
-    fetchLessons();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sort]);
-
-  // reset page when filters change
-  useEffect(() => {
-    setPage(1);
-    fetchLessons();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, category, tone]);
-
-  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <div className="flex items-start justify-between gap-4 flex-col sm:flex-row">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Public Lessons</h1>
+          <h1 className="text-3xl font-bold">Public Lessons</h1>
           <p className="text-slate-600 mt-1">Browse real lessons shared by people.</p>
         </div>
-        <Link to="/pricing" className="px-4 py-2 rounded-xl border hover:bg-slate-50 font-semibold">
-          {isPremium ? "Premium ✅" : "Upgrade"}
-        </Link>
+
+        <button
+          onClick={() => navigate("/pricing")}
+          className="px-4 py-2 rounded-lg border text-sm font-semibold hover:bg-slate-100"
+        >
+          Upgrade
+        </button>
       </div>
 
       {/* Filters */}
-      <div className="mt-6 bg-white border rounded-2xl p-4 grid gap-3 sm:grid-cols-4">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="rounded-xl border px-3 py-2"
-          placeholder="Search by title/description..."
-        />
+      <div className="mt-6 border rounded-2xl p-4 bg-white">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input
+            value={q}
+            onChange={(e) => {
+              setPage(1);
+              setQ(e.target.value);
+            }}
+            placeholder="Search by title/description..."
+            className="w-full px-4 py-3 rounded-xl border"
+          />
 
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-xl border px-3 py-2">
-          {categories.map((c) => (
-            <option value={c} key={c}>
-              {c ? c : "All categories"}
-            </option>
-          ))}
-        </select>
+          <select
+            value={category}
+            onChange={(e) => {
+              setPage(1);
+              setCategory(e.target.value);
+            }}
+            className="w-full px-4 py-3 rounded-xl border"
+          >
+            <option value="">All categories</option>
+            <option value="Productivity">Productivity</option>
+            <option value="Learning">Learning</option>
+            <option value="Career">Career</option>
+            <option value="Relationships">Relationships</option>
+            <option value="Mindset">Mindset</option>
+          </select>
 
-        <select value={tone} onChange={(e) => setTone(e.target.value)} className="rounded-xl border px-3 py-2">
-          {tones.map((t) => (
-            <option value={t} key={t}>
-              {t ? t : "All tones"}
-            </option>
-          ))}
-        </select>
+          <select
+            value={tone}
+            onChange={(e) => {
+              setPage(1);
+              setTone(e.target.value);
+            }}
+            className="w-full px-4 py-3 rounded-xl border"
+          >
+            <option value="">All tones</option>
+            <option value="Motivational">Motivational</option>
+            <option value="Practical">Practical</option>
+            <option value="Reflective">Reflective</option>
+          </select>
 
-        <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-xl border px-3 py-2">
-          <option value="newest">Newest</option>
-          <option value="mostSaved">Most saved</option>
-        </select>
+          <select
+            value={sort}
+            onChange={(e) => {
+              setPage(1);
+              setSort(e.target.value);
+            }}
+            className="w-full px-4 py-3 rounded-xl border"
+          >
+            <option value="newest">Newest</option>
+            <option value="mostSaved">Most saved</option>
+          </select>
+        </div>
       </div>
 
       {/* Grid */}
-      <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {data.items.map((lesson) => {
-          const locked = lesson.accessLevel === "Premium" && !isPremium;
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+        {items.map((lesson) => {
+          const locked = lesson.accessLevel === "Premium" && !isPremiumUser;
 
           return (
-            <div key={lesson._id} className="bg-white border rounded-2xl p-5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700">
+            <div key={lesson._id} className="border rounded-2xl p-5 bg-white relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
                   {lesson.category} • {lesson.tone}
-                </span>
-                <span className={`text-xs px-2 py-1 rounded-full ${lesson.accessLevel === "Premium" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
-                  {lesson.accessLevel}
+                </p>
+                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                  {lesson.accessLevel || "Free"}
                 </span>
               </div>
 
-              <h3 className={`mt-3 font-bold text-lg text-slate-900 ${locked ? "blur-sm select-none" : ""}`}>
+              <h3 className={`mt-3 text-xl font-bold ${locked ? "blur-sm select-none" : ""}`}>
                 {lesson.title}
               </h3>
 
-              <p className={`mt-2 text-slate-600 text-sm ${locked ? "blur-sm select-none" : ""}`}>
-                {lesson.description?.slice(0, 110)}...
+              <p className={`mt-2 text-slate-600 ${locked ? "blur-sm select-none" : ""}`}>
+                {(lesson.description || "").slice(0, 120)}
+                {lesson.description?.length > 120 ? "..." : ""}
               </p>
 
-              <div className="mt-4 flex items-center justify-between">
-                <p className="text-xs text-slate-500">By {lesson.ownerName || "User"}</p>
+              <p className="mt-4 text-xs text-slate-500">By {lesson.creatorName || "Unknown"}</p>
 
-                {locked ? (
-                  <Link to="/pricing" className="px-3 py-2 rounded-xl bg-black text-white text-sm font-semibold">
-                    Upgrade to unlock
-                  </Link>
-                ) : (
-                  <Link to={`/lessons/${lesson._id}`} className="px-3 py-2 rounded-xl border text-sm font-semibold hover:bg-slate-50">
+              <div className="mt-4 flex justify-end">
+                {canOpen(lesson) ? (
+                  <Link
+                    to={`/lessons/${lesson._id}`}   // ✅ MUST match router
+                    className="px-4 py-2 rounded-lg border text-sm font-semibold hover:bg-slate-100"
+                  >
                     View details
                   </Link>
+                ) : (
+                  <button
+                    onClick={() => navigate("/pricing")}
+                    className="px-4 py-2 rounded-lg bg-black text-white text-sm font-semibold hover:opacity-90"
+                  >
+                    Upgrade to view
+                  </button>
                 )}
               </div>
+
+              {locked && (
+                <div className="absolute inset-0 pointer-events-none bg-white/40" />
+              )}
             </div>
           );
         })}
       </div>
 
       {/* Pagination */}
-      <div className="mt-10 flex items-center justify-center gap-2">
+      <div className="mt-10 flex items-center justify-center gap-4">
         <button
           disabled={page <= 1}
           onClick={() => setPage((p) => p - 1)}
-          className="px-3 py-2 rounded-xl border disabled:opacity-50"
+          className="px-4 py-2 rounded-lg border disabled:opacity-40"
         >
           Prev
         </button>
 
-        <span className="text-sm text-slate-600">
-          Page <b>{page}</b> / {data.totalPages || 1}
-        </span>
+        <p className="text-sm text-slate-600">
+          Page {page} / {meta.pages}
+        </p>
 
         <button
-          disabled={page >= (data.totalPages || 1)}
+          disabled={page >= meta.pages}
           onClick={() => setPage((p) => p + 1)}
-          className="px-3 py-2 rounded-xl border disabled:opacity-50"
+          className="px-4 py-2 rounded-lg border disabled:opacity-40"
         >
           Next
         </button>

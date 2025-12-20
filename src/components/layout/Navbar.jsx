@@ -1,6 +1,8 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../../providers/AuthProvider";
+import useAuth from "../../hooks/useAuth";
 import Avatar from "../shared/Avatar";
+
+
 
 export default function Navbar() {
   const navigate = useNavigate();

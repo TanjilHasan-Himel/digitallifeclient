@@ -1,3 +1,4 @@
+// client/src/routes/router.jsx
 import { createBrowserRouter } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
@@ -10,7 +11,6 @@ import Pricing from "../pages/Pricing";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import NotFound from "../pages/NotFound";
-
 import PaymentSuccess from "../pages/PaymentSuccess";
 import PaymentCancel from "../pages/PaymentCancel";
 
@@ -31,9 +31,15 @@ const router = createBrowserRouter([
       { path: "/public-lessons", element: <PublicLessons /> },
       { path: "/pricing", element: <Pricing /> },
 
-      // ✅ payment callbacks
-      { path: "/payment/success", element: <PaymentSuccess /> },
-      { path: "/payment/cancel", element: <PaymentCancel /> },
+      {
+        path: "/payment-success",
+        element: (
+          <PrivateRoute>
+            <PaymentSuccess />
+          </PrivateRoute>
+        ),
+      },
+      { path: "/payment-cancel", element: <PaymentCancel /> },
 
       {
         path: "/lessons/:id",

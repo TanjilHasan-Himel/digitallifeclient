@@ -1,19 +1,23 @@
-// Assigement 11/digital-life-lessons/client/src/pages/PaymentCancel.jsx
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function PaymentCancel() {
-  return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      <div className="rounded-2xl border bg-white p-6">
-        <h1 className="text-2xl font-bold">Payment Canceled</h1>
-        <p className="text-slate-600 mt-2">No worries — you can upgrade anytime.</p>
+  const navigate = useNavigate();
 
-        <Link
-          to="/pricing"
-          className="inline-block mt-6 px-5 py-3 rounded-xl bg-black text-white font-semibold"
+  return (
+    <div className="max-w-3xl mx-auto p-6">
+      <h1 className="text-2xl font-bold">Payment Cancelled</h1>
+
+      <div className="mt-4 rounded-xl border bg-white p-5">
+        <p className="text-slate-700">
+          Your payment was cancelled. You can try again anytime.
+        </p>
+
+        <button
+          onClick={() => navigate("/pricing")}
+          className="mt-4 px-4 py-2 rounded-lg bg-black text-white"
         >
-          Back to Pricing
-        </Link>
+          Try Again
+        </button>
       </div>
     </div>
   );

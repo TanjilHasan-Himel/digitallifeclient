@@ -1,12 +1,19 @@
-import useTitle from "../hooks/useTitle";
+// Assigement 11/digital-life-lessons/client/src/pages/PaymentCancel.jsx
+import { Link } from "react-router-dom";
 
 export default function PaymentCancel() {
-  useTitle("Payment Cancelled");
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="max-w-3xl mx-auto px-4 py-12">
       <div className="rounded-2xl border bg-white p-6">
-        <h1 className="text-2xl font-extrabold text-slate-900">Payment Cancelled</h1>
-        <p className="mt-2 text-slate-600">No worries — you can upgrade anytime from the Upgrade page.</p>
+        <h1 className="text-2xl font-bold">Payment Canceled</h1>
+        <p className="text-slate-600 mt-2">No worries — you can upgrade anytime.</p>
+
+        <Link
+          to="/pricing"
+          className="inline-block mt-6 px-5 py-3 rounded-xl bg-black text-white font-semibold"
+        >
+          Back to Pricing
+        </Link>
       </div>
     </div>
   );

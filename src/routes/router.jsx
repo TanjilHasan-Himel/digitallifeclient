@@ -1,5 +1,5 @@
 // client/src/routes/router.jsx
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import PrivateRoute from "./PrivateRoute";
@@ -8,6 +8,8 @@ import Home from "../pages/Home";
 import PublicLessons from "../pages/PublicLessons";
 import LessonDetails from "../pages/LessonDetails";
 import Pricing from "../pages/Pricing";
+import PaymentSuccess from "../pages/PaymentSuccess";
+import PaymentCancel from "../pages/PaymentCancel";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import NotFound from "../pages/NotFound";
@@ -28,6 +30,9 @@ const router = createBrowserRouter([
       { path: "/", element: <Home /> },
       { path: "/public-lessons", element: <PublicLessons /> },
       { path: "/pricing", element: <Pricing /> },
+
+      { path: "/payment-success", element: <PaymentSuccess /> },
+      { path: "/payment-cancel", element: <PaymentCancel /> },
 
       {
         path: "/lessons/:id",
@@ -53,13 +58,7 @@ const router = createBrowserRouter([
       { index: true, element: <DashboardHome /> },
       { path: "add-lesson", element: <AddLesson /> },
       { path: "my-lessons", element: <MyLessons /> },
-
-      // ✅ Spec route
-      { path: "my-favorites", element: <Favorites /> },
-
-      // ✅ Backward-compatible alias (old route)
-      { path: "favorites", element: <Navigate to="/dashboard/my-favorites" replace /> },
-
+      { path: "favorites", element: <Favorites /> },
       { path: "profile", element: <Profile /> },
       { path: "update-lesson/:id", element: <UpdateLesson /> },
     ],

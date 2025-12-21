@@ -1,24 +1,28 @@
+// client/src/constants/lessonOptions.js
+
 export const CATEGORIES = [
-  "Productivity",
-  "Learning",
+  "Personal Growth",
   "Career",
   "Relationships",
-  "Mental Health",
-  "Communication",
-  "Health & Fitness",
-  "Money & Finance",
-  "Self-Discipline",
   "Mindset",
-  "Family",
-  "Spirituality",
+  "Mistakes Learned",
+  "Productivity",
+  "Learning",
+  "Health",
+  "Finance",
+  "Communication",
 ];
 
 export const TONES = [
   "Motivational",
   "Practical",
+  "Realization",
+  "Gratitude",
   "Reflective",
-  "Story-based",
-  "Serious",
+  "Sad",
+  "Inspirational",
   "Humorous",
-  "Calm",
 ];
+
+export const VISIBILITY = ["Public", "Private"];
+export const ACCESS_LEVELS = ["Free", "Premium"];

@@ -1,41 +1,41 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import axiosSecure from "../../api/axiosSecure";
 import useAuth from "../../hooks/useAuth";
 import useTitle from "../../hooks/useTitle";
-
+import { CATEGORIES, TONES, VISIBILITY, ACCESS_LEVELS } from "../../constants/lessonOptions";
 
 export default function AddLesson() {
   useTitle("Add Lesson");
-  const { isPremium } = useAuth();
 
-  const categories = useMemo(
-    () => [
-      "Productivity",
-      "Mindset",
-      "Career",
-      "Relationships",
-      "Communication",
-      "Health",
-      "Finance",
-      "Learning",
-      "Leadership",
-    ],
-    []
-  );
+  // ✅ compatible: যদি hook এ isPremium না থাকে, me থেকে ধরবে
+  const auth = useAuth();
+  const isPremium = typeof auth?.isPremium === "boolean" ? auth.isPremium : !!auth?.me?.isPremium;
 
-  const tones = useMemo(
-    () => ["Motivational", "Reflective", "Practical", "Calm", "Honest", "Empathetic", "Challenging"],
-    []
-  );
+  // ✅ constants থেকে options (fallback সহ)
+  const categories =
+    Array.isArray(CATEGORIES) && CATEGORIES.length
+      ? CATEGORIES
+      : ["Productivity", "Mindset", "Career", "Relationships", "Communication", "Health", "Finance", "Learning", "Leadership"];
+
+  const tones =
+    Array.isArray(TONES) && TONES.length
+      ? TONES
+      : ["Motivational", "Reflective", "Practical", "Calm", "Honest", "Empathetic", "Challenging"];
+
+  const visibilityOptions =
+    Array.isArray(VISIBILITY) && VISIBILITY.length ? VISIBILITY : ["Public", "Private"];
+
+  const accessOptions =
+    Array.isArray(ACCESS_LEVELS) && ACCESS_LEVELS.length ? ACCESS_LEVELS : ["Free", "Premium"];
 
   const [form, setForm] = useState({
     title: "",
     description: "",
-    category: categories[0],
-    tone: tones[0],
-    visibility: "Public", // Public | Private
-    accessLevel: "Free", // Free | Premium
+    category: categories[0] || "",
+    tone: tones[0] || "",
+    visibility: "Public",
+    accessLevel: "Free",
   });
 
   const [saving, setSaving] = useState(false);
@@ -57,6 +57,7 @@ export default function AddLesson() {
 
     try {
       setSaving(true);
+
       const { data } = await axiosSecure.post("/lessons", {
         title: form.title.trim(),
         description: form.description.trim(),
@@ -163,8 +164,11 @@ export default function AddLesson() {
               onChange={onChange}
               className="mt-1 w-full rounded-xl border px-4 py-3"
             >
-              <option value="Public">Public</option>
-              <option value="Private">Private</option>
+              {visibilityOptions.map((v) => (
+                <option value={v} key={v}>
+                  {v}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -176,11 +180,13 @@ export default function AddLesson() {
               onChange={onChange}
               className="mt-1 w-full rounded-xl border px-4 py-3"
             >
-              <option value="Free">Free</option>
-              <option value="Premium" disabled={!isPremium}>
-                Premium {isPremium ? "" : "(Upgrade required)"}
-              </option>
+              {accessOptions.map((a) => (
+                <option key={a} value={a} disabled={a === "Premium" && !isPremium}>
+                  {a} {a === "Premium" && !isPremium ? "(Upgrade required)" : ""}
+                </option>
+              ))}
             </select>
+
             {!isPremium && (
               <p className="text-xs text-slate-500 mt-1">
                 Premium publish করতে Upgrade লাগবে — তবে Free lesson publish করতে পারবে।

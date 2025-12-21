@@ -1,12 +1,9 @@
-// client/src/pages/PublicLessons.jsx
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axiosSecure from "../api/axiosSecure";
 import useTitle from "../hooks/useTitle";
-
-
+import { CATEGORIES, TONES } from "../constants/lessonOptions";
 
 export default function PublicLessons() {
   useTitle("Public Lessons");
@@ -22,6 +19,16 @@ export default function PublicLessons() {
   const [meta, setMeta] = useState({ pages: 1 });
 
   const isPremiumUser = !!me?.isPremium;
+
+  const categories =
+    Array.isArray(CATEGORIES) && CATEGORIES.length
+      ? CATEGORIES
+      : ["Productivity", "Learning", "Career", "Relationships", "Mindset"];
+
+  const tones =
+    Array.isArray(TONES) && TONES.length
+      ? TONES
+      : ["Motivational", "Practical", "Reflective"];
 
   useEffect(() => {
     let ignore = false;
@@ -83,11 +90,11 @@ export default function PublicLessons() {
             className="w-full px-4 py-3 rounded-xl border"
           >
             <option value="">All categories</option>
-            <option value="Productivity">Productivity</option>
-            <option value="Learning">Learning</option>
-            <option value="Career">Career</option>
-            <option value="Relationships">Relationships</option>
-            <option value="Mindset">Mindset</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
 
           <select
@@ -99,9 +106,11 @@ export default function PublicLessons() {
             className="w-full px-4 py-3 rounded-xl border"
           >
             <option value="">All tones</option>
-            <option value="Motivational">Motivational</option>
-            <option value="Practical">Practical</option>
-            <option value="Reflective">Reflective</option>
+            {tones.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
           </select>
 
           <select
@@ -123,6 +132,9 @@ export default function PublicLessons() {
         {items.map((lesson) => {
           const locked = lesson.accessLevel === "Premium" && !isPremiumUser;
 
+          // ✅ MongoDB অনুযায়ী: ownerName (fallback রাখা)
+          const authorName = lesson?.ownerName || lesson?.creatorName || "Unknown";
+
           return (
             <div key={lesson._id} className="border rounded-2xl p-5 bg-white relative overflow-hidden">
               <div className="flex items-center justify-between">
@@ -143,12 +155,12 @@ export default function PublicLessons() {
                 {lesson.description?.length > 120 ? "..." : ""}
               </p>
 
-              <p className="mt-4 text-xs text-slate-500">By {lesson.creatorName || "Unknown"}</p>
+              <p className="mt-4 text-xs text-slate-500">By {authorName}</p>
 
               <div className="mt-4 flex justify-end">
                 {canOpen(lesson) ? (
                   <Link
-                    to={`/lessons/${lesson._id}`}   // ✅ MUST match router
+                    to={`/lessons/${lesson._id}`}
                     className="px-4 py-2 rounded-lg border text-sm font-semibold hover:bg-slate-100"
                   >
                     View details
@@ -163,9 +175,7 @@ export default function PublicLessons() {
                 )}
               </div>
 
-              {locked && (
-                <div className="absolute inset-0 pointer-events-none bg-white/40" />
-              )}
+              {locked && <div className="absolute inset-0 pointer-events-none bg-white/40" />}
             </div>
           );
         })}

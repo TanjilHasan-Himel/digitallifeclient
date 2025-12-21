@@ -1,4 +1,5 @@
-import { createBrowserRouter } from "react-router-dom";
+// client/src/routes/router.jsx
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import PrivateRoute from "./PrivateRoute";
@@ -24,12 +25,12 @@ const router = createBrowserRouter([
     element: <MainLayout />,
     errorElement: <NotFound />,
     children: [
-      { index: true, element: <Home /> },
-      { path: "public-lessons", element: <PublicLessons /> },
-      { path: "pricing", element: <Pricing /> },
+      { path: "/", element: <Home /> },
+      { path: "/public-lessons", element: <PublicLessons /> },
+      { path: "/pricing", element: <Pricing /> },
 
       {
-        path: "lessons/:id",
+        path: "/lessons/:id",
         element: (
           <PrivateRoute>
             <LessonDetails />
@@ -37,8 +38,8 @@ const router = createBrowserRouter([
         ),
       },
 
-      { path: "login", element: <Login /> },
-      { path: "register", element: <Register /> },
+      { path: "/login", element: <Login /> },
+      { path: "/register", element: <Register /> },
     ],
   },
   {
@@ -48,12 +49,17 @@ const router = createBrowserRouter([
         <DashboardLayout />
       </PrivateRoute>
     ),
-    errorElement: <NotFound />,
     children: [
       { index: true, element: <DashboardHome /> },
       { path: "add-lesson", element: <AddLesson /> },
       { path: "my-lessons", element: <MyLessons /> },
-      { path: "favorites", element: <Favorites /> },
+
+      // ✅ Spec route
+      { path: "my-favorites", element: <Favorites /> },
+
+      // ✅ Backward-compatible alias (old route)
+      { path: "favorites", element: <Navigate to="/dashboard/my-favorites" replace /> },
+
       { path: "profile", element: <Profile /> },
       { path: "update-lesson/:id", element: <UpdateLesson /> },
     ],

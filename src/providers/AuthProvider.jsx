@@ -124,6 +124,8 @@ export default function AuthProvider({ children }) {
       registerUser,
       loginUser,
       loginWithGoogle,
+      // alias for compatibility in Login.jsx
+      googleLogin: loginWithGoogle,
       logoutUser,
       refreshMe,
       // compatibility

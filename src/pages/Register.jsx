@@ -42,7 +42,7 @@ export default function Register() {
       });
 
       toast.success("Account তৈরি হয়েছে ✅ এখন লগইন অবস্থায় আছো!");
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       toast.error(err?.message || "Register failed");
     } finally {

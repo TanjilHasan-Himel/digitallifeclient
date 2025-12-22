@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axiosSecure from "../../api/axiosSecure";
 import useAuth from "../../hooks/useAuth";
 import { CATEGORIES, TONES } from "../../constants/lessonOptions";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function AddLesson() {
   const { me } = useAuth();
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
+  const [showCelebrate, setShowCelebrate] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,12 +30,17 @@ export default function AddLesson() {
       const { data } = await axiosSecure.post("/lessons", payload);
       if (data?.ok) {
         setMsg("Lesson created ✅");
+        toast.success("Lesson added successfully");
+        setShowCelebrate(true);
+        setTimeout(() => setShowCelebrate(false), 2000);
         form.reset();
       } else {
         setMsg("Lesson create failed ❌");
+        toast.error("Failed to create lesson");
       }
     } catch (err) {
       setMsg(err?.response?.data?.message || "Create failed ❌");
+      toast.error(err?.response?.data?.message || "Create failed");
       console.log("AddLesson error:", err);
     } finally {
       setLoading(false);
@@ -43,6 +50,21 @@ export default function AddLesson() {
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-2xl font-bold">Add Lesson</h1>
+
+      {showCelebrate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
+          <div className="bg-white rounded-2xl p-6 shadow-xl">
+            <lottie-player
+              autoplay
+              speed="1"
+              mode="normal"
+              src="https://assets4.lottiefiles.com/packages/lf20_touohxv0.json"
+              style={{ width: '160px', height: '160px' }}
+            ></lottie-player>
+            <p className="text-center font-semibold mt-2">Saved!</p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
         <input name="title" className="border p-3 rounded" placeholder="Lesson title" required />

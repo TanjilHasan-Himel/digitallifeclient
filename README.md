@@ -1,16 +1,33 @@
-# React + Vite
+# Digital Life Lessons — Client (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Live Site: https://your-live-site-url.example.com
 
-Currently, two official plugins are available:
+Digital Life Lessons is a platform to capture, organize, and share meaningful life lessons. Users can create lessons (Public/Private), mark favorites, and browse community wisdom. Premium users unlock premium lessons and extra features.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Highlights
 
-## React Compiler
+- Clean, reload-safe routing with protected dashboard and details pages
+- Free vs Premium model with live Stripe Checkout (test mode) integration
+- Public lessons with search, filter (category/tone), sort, and pagination
+- Premium gating: blurred/locked cards with clear Upgrade CTA for free users
+- Full dashboard suite: My Lessons, Favorites, Profile, Admin tools (MVP)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Core Pages
 
-## Expanding the ESLint configuration
+- Home (Hero slider, Featured Lessons, Top Contributors, Most Saved)
+- Public Lessons (search, filter, sort, pagination)
+- Pricing/Upgrade (comparison + Stripe checkout)
+- Dashboard (Add Lesson, My Lessons, Favorites, Profile)
+- Lesson Details (comments, favorites, like, report, share)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Getting Started
+
+1. Copy `.env.example` to `.env` and set `VITE_API_BASE` to your server URL
+2. Install deps and run dev server
+
+```bash
+npm install
+npm run dev
+```
+
+For production, ensure your domain is authorized in Firebase and CORS.

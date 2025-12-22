@@ -1,5 +1,6 @@
 import axiosSecure from "../../../api/axiosSecure";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function ManageUsers() {
   const [rows, setRows] = useState([]);
@@ -25,9 +26,9 @@ export default function ManageUsers() {
     try {
       await axiosSecure.patch(`/admin/users/${uid}/role`, { role });
       await load();
-      alert("Role updated");
+      toast.success("Role updated");
     } catch (e) {
-      alert(e?.response?.data?.message || "Update failed");
+      toast.error(e?.response?.data?.message || "Update failed");
     }
   };
 

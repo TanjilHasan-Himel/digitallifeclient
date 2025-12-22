@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosSecure from "../api/axiosSecure";
+import toast from "react-hot-toast";
 import useAuth from "../hooks/useAuth";
 import { CATEGORIES, TONES } from "../constants/lessonOptions";
 import LoadingSpinner from "../components/shared/LoadingSpinner";
@@ -79,7 +80,7 @@ export default function PublicLessons() {
         return next;
       });
     } catch (e) {
-      alert(e?.response?.data?.message || "Favorite failed.");
+      toast.error(e?.response?.data?.message || "Favorite failed");
     }
   };
 
@@ -146,7 +147,7 @@ export default function PublicLessons() {
         <select value={sort} onChange={onFilterChange(setSort)} className="rounded-xl border px-4 py-3">
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
-          <option value="title">Title</option>
+          <option value="popular">Most saved</option>
         </select>
       </div>
 

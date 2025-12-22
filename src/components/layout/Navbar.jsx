@@ -36,7 +36,8 @@ export default function Navbar() {
           <img
             src="/logo.png"
             alt="Digital Life Lessons"
-            className="h-8 w-8 rounded"
+            className="h-8 md:h-9 lg:h-10 w-auto rounded object-contain transition-transform duration-200 hover:scale-105"
+            loading="lazy"
           />
           <div className="leading-tight">
             <p className="font-semibold text-slate-900">Digital Life Lessons</p>
@@ -74,9 +75,16 @@ export default function Navbar() {
             </>
           )}
 
-          <NavLink to="/pricing" className={navLinkClass}>
-            {isPremium ? "Premium ✅" : "Upgrade"}
-          </NavLink>
+          {!isPremium && (
+            <NavLink to="/pricing" className={navLinkClass}>
+              Upgrade
+            </NavLink>
+          )}
+          {isPremium && (
+            <span className="px-3 py-2 rounded-lg text-sm font-medium text-slate-700">
+              Premium ✅
+            </span>
+          )}
         </nav>
 
         {/* Right */}

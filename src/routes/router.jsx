@@ -35,7 +35,14 @@ const router = createBrowserRouter([
     children: [
       { path: "/", element: <Home /> },
       { path: "/public-lessons", element: <PublicLessons /> },
-      { path: "/pricing", element: <Pricing /> },
+      {
+        path: "/pricing",
+        element: (
+          <PrivateRoute>
+            <Pricing />
+          </PrivateRoute>
+        ),
+      },
 
       {
         path: "/payment-success",

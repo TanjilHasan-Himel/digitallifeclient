@@ -1,5 +1,6 @@
 import axiosSecure from "../../../api/axiosSecure";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function ManageLessons() {
   const [rows, setRows] = useState([]);
@@ -24,7 +25,8 @@ export default function ManageLessons() {
     try {
       await axiosSecure.patch(`/admin/lessons/${id}`, { featured });
       await load();
-    } catch (e) { alert(e?.response?.data?.message || "Update failed"); }
+      toast.success(featured ? "Marked as featured" : "Removed from featured");
+    } catch (e) { toast.error(e?.response?.data?.message || "Update failed"); }
   };
 
   const deleteLesson = async (id) => {
@@ -32,7 +34,8 @@ export default function ManageLessons() {
     try {
       await axiosSecure.delete(`/admin/lessons/${id}`);
       await load();
-    } catch (e) { alert(e?.response?.data?.message || "Delete failed"); }
+      toast.success("Lesson deleted");
+    } catch (e) { toast.error(e?.response?.data?.message || "Delete failed"); }
   };
 
   return (

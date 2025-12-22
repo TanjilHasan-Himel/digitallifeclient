@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import axiosSecure from "../../api/axiosSecure";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import { Link } from "react-router-dom";
@@ -35,10 +36,10 @@ export default function MyLessons() {
     try {
       await axiosSecure.delete(`/lessons/${id}`);
       await load();
-      alert("Lesson deleted ✅");
+      toast.success("Lesson deleted ✅");
     } catch (e) {
       console.error(e);
-      alert(e?.response?.data?.message || "Delete failed");
+      toast.error(e?.response?.data?.message || "Delete failed");
     }
   };
 

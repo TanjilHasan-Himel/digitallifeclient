@@ -1,16 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axiosSecure from "../api/axiosSecure";
+import toast from "react-hot-toast";
 
 export default function LessonDetails() {
   const { id } = useParams();
-  const { me } = useAuth();
+  const { me, user } = useAuth();
   const [lesson, setLesson] = useState(null);
   const [comments, setComments] = useState([]);
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [reporting, setReporting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const viewsCount = useMemo(() => Math.floor(Math.random() * 10000), [id]);
+  const [relByCategory, setRelByCategory] = useState([]);
+  const [relByTone, setRelByTone] = useState([]);
 
   const loadAll = async () => {
     setErr("");
@@ -18,9 +25,26 @@ export default function LessonDetails() {
     try {
       const { data } = await axiosSecure.get(`/lessons/${id}`);
       setLesson(data);
+      setIsLiked(Array.isArray(data.likes) ? data.likes.includes(me?.uid) : false);
+      setLikesCount(data.likesCount || 0);
 
       const c = await axiosSecure.get(`/lessons/${id}/comments`);
       setComments(Array.isArray(c.data) ? c.data : []);
+
+      // Related
+      try {
+        if (data?.category) {
+          const rc = await axiosSecure.get(`/lessons/public?category=${encodeURIComponent(data.category)}&limit=6`);
+          setRelByCategory((rc.data?.lessons || []).filter((x) => String(x._id) !== String(id)));
+        }
+        if (data?.tone) {
+          const rt = await axiosSecure.get(`/lessons/public?tone=${encodeURIComponent(data.tone)}&limit=6`);
+          setRelByTone((rt.data?.lessons || []).filter((x) => String(x._id) !== String(id)));
+        }
+      } catch {
+        setRelByCategory([]);
+        setRelByTone([]);
+      }
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load details");
     }
@@ -49,16 +73,54 @@ export default function LessonDetails() {
 
   const reportLesson = async () => {
     if (!lesson) return;
-    const reason = prompt("Report reason?");
+    const reason = prompt("Report reason? (e.g. Inappropriate, Spam, Misleading)");
     if (!reason || !reason.trim()) return;
     try {
       setReporting(true);
       await axiosSecure.post(`/lessons/${id}/report`, { reason });
-      alert("Reported. Thanks for helping keep the community safe.");
+      toast.success("Reported. Thanks for helping keep the community safe.");
     } catch (e) {
-      alert(e?.response?.data?.message || "Report failed");
+      toast.error(e?.response?.data?.message || "Report failed");
     } finally {
       setReporting(false);
+    }
+  };
+
+  const toggleLike = async () => {
+    try {
+      const { data } = await axiosSecure.post(`/lessons/${id}/like`);
+      setIsLiked(!!data.liked);
+      setLikesCount(data.likesCount ?? 0);
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Like failed");
+    }
+  };
+
+  const toggleSave = async () => {
+    try {
+      const { data } = await axiosSecure.post("/favorites/toggle", { lessonId: id });
+      setIsSaved(!!data.saved);
+      toast.success(data.saved ? "Saved to favorites" : "Removed from favorites");
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Save failed");
+    }
+  };
+
+  const shareLesson = async () => {
+    try {
+      const shareData = {
+        title: lesson?.title || "Life Lesson",
+        text: "Check out this lesson I found on Digital Life Lessons",
+        url: window.location.href,
+      };
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied to clipboard");
+      }
+    } catch {
+      /* ignore */
     }
   };
 
@@ -110,7 +172,32 @@ export default function LessonDetails() {
         <p className="whitespace-pre-wrap">{lesson.description}</p>
       </div>
 
-      <div className="mt-4 flex justify-end gap-2">
+      {/* Metadata */}
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-600">
+        <div>Created: {lesson.createdAt ? new Date(lesson.createdAt).toLocaleString() : "—"}</div>
+        <div>Last Updated: {lesson.updatedAt ? new Date(lesson.updatedAt).toLocaleString() : "—"}</div>
+        <div>Visibility: {lesson.visibility}</div>
+        <div>
+          Estimated Reading Time: {Math.max(1, Math.ceil(((lesson.description || '').split(/\s+/).length)/200))} min
+        </div>
+        <div>❤ {likesCount} Likes</div>
+        <div>👁️ {viewsCount.toLocaleString()} Views</div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+        {user && (
+          <>
+            <button onClick={toggleSave} className="rounded-xl border px-4 py-2 hover:bg-slate-50">
+              {isSaved ? "Saved ✅" : "Save to Favorites"}
+            </button>
+            <button onClick={toggleLike} className="rounded-xl border px-4 py-2 hover:bg-slate-50">
+              {isLiked ? "❤ Liked" : "❤ Like"}
+            </button>
+          </>
+        )}
+        <button onClick={shareLesson} className="rounded-xl border px-4 py-2 hover:bg-slate-50">
+          Share
+        </button>
         {me?.uid && me?.uid !== lesson.ownerUid && (
           <button disabled={reporting} onClick={reportLesson} className="rounded-xl border px-4 py-2 hover:bg-slate-50">
             {reporting ? "Reporting..." : "Report lesson"}
@@ -137,6 +224,38 @@ export default function LessonDetails() {
           {comments.length === 0 && <p className="text-slate-600">No comments yet.</p>}
         </div>
       </div>
+
+      {/* Related by Category */}
+      {relByCategory.length > 0 && (
+        <div className="mt-10">
+          <h3 className="text-lg font-bold">Similar in {lesson.category}</h3>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {relByCategory.slice(0, 6).map((r) => (
+              <div key={r._id} className="rounded-xl border bg-white p-4">
+                <div className="text-sm text-slate-600">{r.tone} • {r.accessLevel === 'Premium' ? '⚡ Premium' : 'Free'}</div>
+                <Link className="font-semibold block mt-1" to={`/lessons/${r._id}`}>{r.title}</Link>
+                <p className="text-slate-700 text-sm mt-1">{(r.description || '').slice(0, 120)}...</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Related by Tone */}
+      {relByTone.length > 0 && (
+        <div className="mt-10">
+          <h3 className="text-lg font-bold">More {lesson.tone} lessons</h3>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {relByTone.slice(0, 6).map((r) => (
+              <div key={r._id} className="rounded-xl border bg-white p-4">
+                <div className="text-sm text-slate-600">{r.category} • {r.accessLevel === 'Premium' ? '⚡ Premium' : 'Free'}</div>
+                <Link className="font-semibold block mt-1" to={`/lessons/${r._id}`}>{r.title}</Link>
+                <p className="text-slate-700 text-sm mt-1">{(r.description || '').slice(0, 120)}...</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

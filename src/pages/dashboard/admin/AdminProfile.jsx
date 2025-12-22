@@ -1,6 +1,7 @@
 import useAuth from "../../../hooks/useAuth";
 import { useState } from "react";
 import axiosSecure from "../../../api/axiosSecure";
+import toast from "react-hot-toast";
 
 export default function AdminProfile() {
   const { user, me, updateUserProfile, refreshMe } = useAuth();
@@ -19,9 +20,9 @@ export default function AdminProfile() {
         photoURL,
       });
       await refreshMe();
-      alert("Profile updated");
+      toast.success("Profile updated");
     } catch (e) {
-      alert(e?.message || "Update failed");
+      toast.error(e?.message || "Update failed");
     } finally {
       setSaving(false);
     }

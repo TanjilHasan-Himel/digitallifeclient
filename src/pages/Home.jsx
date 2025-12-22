@@ -35,18 +35,18 @@ export default function Home() {
       <div className="mt-12">
         <SectionTitle title="Featured Life Lessons" subtitle="Handpicked insights from our community" />
         {featured.length === 0 ? (
-          <div className="rounded-2xl border bg-white p-8 text-slate-600">No featured lessons yet.</div>
+          <div className="rounded-2xl border dark:border-slate-700 bg-white dark:bg-slate-800 p-8 text-slate-600 dark:text-slate-400">No featured lessons yet.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {featured.map((l) => (
-              <a key={l._id} href={`/lessons/${l._id}`} className="rounded-2xl border bg-white p-5 block hover:bg-slate-50">
-                <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+              <a key={l._id} href={`/lessons/${l._id}`} className="rounded-2xl border dark:border-slate-700 bg-white dark:bg-slate-800 p-5 block hover:bg-slate-50 dark:hover:bg-slate-700">
+                <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 dark:bg-slate-700 px-3 py-1 text-xs text-slate-700 dark:text-slate-300">
                   <span>{l.category}</span>
                   <span>•</span>
                   <span>{l.tone}</span>
                 </div>
-                <h3 className="mt-3 text-xl font-bold text-slate-900">{l.title}</h3>
-                <p className="mt-2 text-slate-700">{(l.description || "").slice(0, 120)}...</p>
+                <h3 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">{l.title}</h3>
+                <p className="mt-2 text-slate-700 dark:text-slate-300">{(l.description || "").slice(0, 120)}...</p>
               </a>
             ))}
           </div>
@@ -65,9 +65,9 @@ export default function Home() {
             { t: "Career Growth", d: "Learn from setbacks and turn feedback into progress." },
             { t: "Healthier Relationships", d: "Communicate better by understanding real-life triggers." },
           ].map((x) => (
-            <div key={x.t} className="rounded-2xl border bg-white p-5">
-              <p className="font-bold text-slate-900">{x.t}</p>
-              <p className="mt-2 text-sm text-slate-600">{x.d}</p>
+            <div key={x.t} className="rounded-2xl border dark:border-slate-700 bg-white dark:bg-slate-800 p-5">
+              <p className="font-bold text-slate-900 dark:text-white">{x.t}</p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{x.d}</p>
             </div>
           ))}
         </div>
@@ -77,14 +77,14 @@ export default function Home() {
       <div className="mt-12">
         <SectionTitle title="Top Contributors of the Week" subtitle="Most active sharers in the last 7 days" />
         {contributors.length === 0 ? (
-          <div className="rounded-2xl border bg-white p-8 text-slate-600">No activity yet.</div>
+          <div className="rounded-2xl border dark:border-slate-700 bg-white dark:bg-slate-800 p-8 text-slate-600 dark:text-slate-400">No activity yet.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {contributors.map((c) => (
-              <div key={c._id} className="rounded-2xl border bg-white p-5">
-                <p className="text-sm text-slate-500">User</p>
-                <p className="text-xl font-bold">{c.name || c._id}</p>
-                <p className="mt-1 text-slate-600">Lessons: {c.count}</p>
+              <div key={c._id} className="rounded-2xl border dark:border-slate-700 bg-white dark:bg-slate-800 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">User</p>
+                <p className="text-xl font-bold dark:text-white">{c.name || c._id}</p>
+                <p className="mt-1 text-slate-600 dark:text-slate-400">Lessons: {c.count}</p>
               </div>
             ))}
           </div>
@@ -95,18 +95,18 @@ export default function Home() {
       <div className="mt-12">
         <SectionTitle title="Most Saved Lessons" subtitle="Community favorites right now" />
         {mostSaved.length === 0 ? (
-          <div className="rounded-2xl border bg-white p-8 text-slate-600">No data yet.</div>
+          <div className="rounded-2xl border dark:border-slate-700 bg-white dark:bg-slate-800 p-8 text-slate-600 dark:text-slate-400">No data yet.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {mostSaved.map((l) => (
-              <a key={l._id} href={`/lessons/${l._id}`} className="rounded-2xl border bg-white p-5 block hover:bg-slate-50">
-                <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+              <a key={l._id} href={`/lessons/${l._id}`} className="rounded-2xl border dark:border-slate-700 bg-white dark:bg-slate-800 p-5 block hover:bg-slate-50 dark:hover:bg-slate-700">
+                <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 dark:bg-slate-700 px-3 py-1 text-xs text-slate-700 dark:text-slate-300">
                   <span>{l.category}</span>
                   <span>•</span>
                   <span>{l.tone}</span>
                 </div>
-                <h3 className="mt-3 text-xl font-bold text-slate-900">{l.title}</h3>
-                <p className="mt-2 text-slate-700">{(l.description || "").slice(0, 120)}...</p>
+                <h3 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">{l.title}</h3>
+                <p className="mt-2 text-slate-700 dark:text-slate-300">{(l.description || "").slice(0, 120)}...</p>
               </a>
             ))}
           </div>

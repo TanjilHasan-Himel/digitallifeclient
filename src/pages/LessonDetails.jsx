@@ -172,6 +172,26 @@ export default function LessonDetails() {
         <p className="whitespace-pre-wrap">{lesson.description}</p>
       </div>
 
+      {/* Author / Creator Section */}
+      <div className="mt-6 rounded-2xl border bg-white p-5">
+        <h3 className="text-lg font-bold mb-3">About the Creator</h3>
+        <div className="flex items-start gap-4">
+          {lesson.ownerPhotoURL && (
+            <img src={lesson.ownerPhotoURL} alt={lesson.ownerName} className="w-14 h-14 rounded-full object-cover" />
+          )}
+          <div className="flex-1">
+            <p className="font-semibold text-slate-900">{lesson.ownerName || "Anonymous"}</p>
+            <p className="text-sm text-slate-600">{lesson.ownerEmail}</p>
+            <Link
+              to={`/public-lessons?author=${lesson.ownerUid}`}
+              className="mt-3 inline-block rounded-xl bg-slate-900 text-white px-4 py-2 hover:opacity-90 text-sm font-medium"
+            >
+              View all lessons by this author →
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Metadata */}
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-600">
         <div>Created: {lesson.createdAt ? new Date(lesson.createdAt).toLocaleString() : "—"}</div>

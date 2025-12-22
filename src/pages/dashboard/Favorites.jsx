@@ -25,12 +25,12 @@ export default function Favorites() {
 
       <div className="mt-6 grid gap-4">
         {items.map((l) => (
-          <div key={l._id} className="border rounded p-4 bg-white flex items-center justify-between">
+          <div key={l._id} className="border dark:border-slate-700 rounded p-4 bg-white dark:bg-slate-800 flex items-center justify-between">
             <div>
-              <h3 className="font-semibold">{l.title}</h3>
-              <p className="text-sm text-slate-600">{l.category} • {l.tone}</p>
+              <h3 className="font-semibold dark:text-white">{l.title}</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{l.category} • {l.tone}</p>
             </div>
-            <Link className="px-3 py-2 border rounded" to={`/lessons/${l._id}`}>
+            <Link className="px-3 py-2 border dark:border-slate-600 dark:text-white rounded hover:bg-slate-50 dark:hover:bg-slate-700" to={`/lessons/${l._id}`}>
               View
             </Link>
           </div>

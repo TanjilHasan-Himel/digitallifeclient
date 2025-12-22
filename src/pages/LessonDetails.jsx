@@ -1,127 +1,90 @@
-// src/pages/LessonDetails.jsx
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axiosSecure from "../api/axiosSecure";
-import useAuth from "../hooks/useAuth";
-import useTitle from "../hooks/useTitle";
 
 export default function LessonDetails() {
-  useTitle("Lesson Details");
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { me } = useAuth();
-
   const [lesson, setLesson] = useState(null);
-  const [locked, setLocked] = useState(false);
   const [comments, setComments] = useState([]);
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [msg, setMsg] = useState("");
 
   const loadAll = async () => {
-    setLoading(true);
-    setLocked(false);
+    setErr("");
+    setMsg("");
     try {
-      const res = await axiosSecure.get(`/lessons/${id}`);
-      const lessonData = res.data?.lesson ?? res.data; // ✅ handle both shapes
-      setLesson(lessonData);
+      const { data } = await axiosSecure.get(`/lessons/${id}`);
+      setLesson(data);
 
       const c = await axiosSecure.get(`/lessons/${id}/comments`);
-      setComments(c.data?.items || []);
-    } catch (err) {
-      const code = err?.response?.data?.code;
-      if (err?.response?.status === 403 && code === "PREMIUM_LOCK") setLocked(true);
-      else console.error(err);
-    } finally {
-      setLoading(false);
+      setComments(Array.isArray(c.data) ? c.data : []);
+    } catch (e) {
+      setErr(e?.response?.data?.message || "Failed to load details");
     }
   };
 
-  useEffect(() => { loadAll(); /* eslint-disable-next-line */ }, [id]);
+  useEffect(() => {
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
-  const submitComment = async (e) => {
+  const postComment = async (e) => {
     e.preventDefault();
-    const value = text.trim();
-    if (!value) return;
+    setMsg("");
+    const text = e.target.text.value.trim();
+    if (!text) return;
 
-    await axiosSecure.post(`/lessons/${id}/comments`, { text: value });
-
-    // ✅ safest: reload comments (server currently returns {ok:true})
-    const c = await axiosSecure.get(`/lessons/${id}/comments`);
-    setComments(c.data?.items || []);
-    setText("");
+    try {
+      await axiosSecure.post(`/lessons/${id}/comments`, { text });
+      e.target.reset();
+      setMsg("Comment posted ✅");
+      loadAll();
+    } catch (e) {
+      setMsg(e?.response?.data?.message || "Comment failed ❌");
+    }
   };
 
-  if (loading) return <div className="max-w-3xl mx-auto px-4 py-10 text-slate-500">Loading...</div>;
-
-  if (locked) {
+  if (err) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <div className="border rounded-2xl p-6 bg-white">
-          <h2 className="text-2xl font-bold">Premium lesson 🔒</h2>
-          <p className="text-slate-600 mt-2">This lesson is Premium. Upgrade to view full details.</p>
-          <button onClick={() => navigate("/pricing")} className="mt-5 px-5 py-2 rounded-lg bg-black text-white font-semibold">
-            Go to Pricing
-          </button>
-          <p className="mt-4 text-xs text-slate-500">Your plan: {me?.isPremium ? "Premium ✅" : "Free"}</p>
-        </div>
+      <div className="max-w-4xl mx-auto p-6">
+        <p className="text-red-600">{err}</p>
+        <Link to="/pricing" className="inline-block mt-4 px-4 py-2 bg-black text-white rounded">
+          Upgrade
+        </Link>
       </div>
     );
   }
 
-  if (!lesson) return <div className="max-w-3xl mx-auto px-4 py-10 text-red-600">Lesson not found.</div>;
-
-  const author =
-    lesson.ownerName ||
-    lesson.creatorName ||
-    lesson.creator?.name ||
-    "Unknown";
+  if (!lesson) return <div className="p-6">Loading...</div>;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
-      <div className="border rounded-2xl p-6 bg-white">
-        <p className="text-xs text-slate-600 bg-slate-100 px-3 py-1 rounded-full inline-block">
-          {lesson.category} • {lesson.tone} • {lesson.accessLevel || "Free"}
-        </p>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold">{lesson.title}</h1>
+      <p className="text-slate-600 mt-2">
+        {lesson.category} • {lesson.tone} • {lesson.accessLevel} • by {lesson.ownerName || "Unknown"}
+      </p>
 
-        <h1 className="mt-4 text-3xl font-bold">{lesson.title}</h1>
-
-        <p className="mt-3 text-slate-700 leading-relaxed whitespace-pre-line">
-          {lesson.description || "No description found (check DB field name)."}
-        </p>
-
-        <div className="mt-6 flex items-center justify-between text-sm text-slate-600">
-          <span>By {author}</span>
-          <span>{lesson.createdAt ? new Date(lesson.createdAt).toLocaleDateString() : ""}</span>
-        </div>
+      <div className="mt-5 border rounded p-4 bg-white">
+        <p className="whitespace-pre-wrap">{lesson.description}</p>
       </div>
 
-      <div className="mt-6 border rounded-2xl p-6 bg-white">
-        <h2 className="text-xl font-bold">Comments</h2>
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold">Comments</h2>
 
-        <form onSubmit={submitComment} className="mt-4 flex gap-2">
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Write a respectful comment..."
-            className="flex-1 px-4 py-3 rounded-xl border"
-          />
-          <button className="px-5 py-3 rounded-xl bg-black text-white font-semibold">Post</button>
+        <form onSubmit={postComment} className="mt-4 flex gap-2">
+          <input name="text" className="border p-3 rounded flex-1" placeholder="Write a comment..." />
+          <button className="px-4 py-3 bg-black text-white rounded">Post</button>
         </form>
+        {msg && <p className="mt-2 text-sm">{msg}</p>}
 
         <div className="mt-5 space-y-3">
-          {comments.length === 0 ? (
-            <p className="text-sm text-slate-500">No comments yet.</p>
-          ) : (
-            comments.map((c) => (
-              <div key={c._id} className="border rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">{c.name || c.userName || "User"}</p>
-                  <p className="text-xs text-slate-500">{c.createdAt ? new Date(c.createdAt).toLocaleString() : ""}</p>
-                </div>
-                <p className="mt-2 text-slate-700 text-sm">{c.text}</p>
-              </div>
-            ))
-          )}
+          {comments.map((c) => (
+            <div key={c._id} className="border rounded p-3 bg-white">
+              <p className="text-sm text-slate-600">{c.name || "User"}</p>
+              <p>{c.text}</p>
+            </div>
+          ))}
+          {comments.length === 0 && <p className="text-slate-600">No comments yet.</p>}
         </div>
       </div>
     </div>

@@ -1,68 +1,71 @@
-// client/src/pages/PaymentSuccess.jsx
 import { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axiosSecure from "../api/axiosSecure";
-import useAuth from "../hooks/useAuth";
-import LoadingSpinner from "../components/shared/LoadingSpinner";
+import useAuth from "../hooks/useAuth"; // তোমার প্রোজেক্টে যেভাবে auth hook আছে, সেটা রাখো
 
 export default function PaymentSuccess() {
-  const [params] = useSearchParams();
-  const sessionId = params.get("session_id");
-  const { refreshMe } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { refreshMe } = useAuth(); // refreshMe() => /users/me call করে Navbar update করবে
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [err, setErr] = useState("");
 
   useEffect(() => {
     const run = async () => {
       try {
-        if (!sessionId) {
-          setError("Missing session_id.");
+        const params = new URLSearchParams(location.search);
+        const session_id = params.get("session_id");
+
+        if (!session_id) {
+          setErr("session_id missing in URL");
+          setLoading(false);
           return;
         }
-        await axiosSecure.post("/stripe/confirm", { sessionId });
-        await refreshMe(); // ✅ now Navbar will show Premium ✅
+
+        // ✅ IMPORTANT: backend expects { session_id } in body
+        await axiosSecure.post("/stripe/confirm", { session_id });
+
+        // ✅ MongoDB is source of truth → refresh user plan from /users/me
+        await refreshMe();
+
+        setLoading(false);
+        // চাইলে dashboard/profile এ পাঠাও
+        navigate("/dashboard/profile", { replace: true });
       } catch (e) {
-        setError(e?.response?.data?.message || "Payment confirm failed.");
-      } finally {
+        const msg = e?.response?.data?.message || e.message || "Payment confirm failed";
+        setErr(msg);
         setLoading(false);
       }
     };
+
     run();
-  }, [sessionId, refreshMe]);
+  }, [location.search, navigate, refreshMe]);
 
-  if (loading) return <LoadingSpinner />;
-
-  return (
-    <div className="max-w-3xl mx-auto p-6">
-      <div className="rounded-2xl border bg-white p-6">
-        {error ? (
-          <>
-            <h1 className="text-2xl font-bold text-red-600">Payment Issue</h1>
-            <p className="text-slate-600 mt-2">{error}</p>
-            <div className="mt-4 flex gap-3">
-              <Link className="px-4 py-2 rounded-lg border" to="/pricing">
-                Back to Pricing
-              </Link>
-            </div>
-          </>
-        ) : (
-          <>
-            <h1 className="text-2xl font-bold text-green-600">Payment Successful ✅</h1>
-            <p className="text-slate-600 mt-2">
-              Premium activated. Go to dashboard and test premium lessons access.
-            </p>
-            <div className="mt-4 flex gap-3">
-              <Link className="px-4 py-2 rounded-lg bg-black text-white" to="/dashboard/profile">
-                Go to Profile
-              </Link>
-              <Link className="px-4 py-2 rounded-lg border" to="/public-lessons">
-                Browse Lessons
-              </Link>
-            </div>
-          </>
-        )}
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-lg">Confirming your payment…</p>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (err) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-6">
+        <div className="w-full max-w-xl rounded-xl border p-6">
+          <h2 className="text-2xl font-bold text-red-600">Payment Issue</h2>
+          <p className="mt-2 text-gray-700">{err}</p>
+          <button
+            onClick={() => navigate("/upgrade")}
+            className="mt-4 px-4 py-2 rounded-lg bg-black text-white"
+          >
+            Back to Pricing
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }

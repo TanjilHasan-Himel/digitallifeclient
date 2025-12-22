@@ -1,22 +1,24 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import toast from "react-hot-toast";
 import axiosSecure from "../../api/axiosSecure";
-import useTitle from "../../hooks/useTitle";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
+import { Link } from "react-router-dom";
 
 export default function MyLessons() {
-  useTitle("My Lessons");
-  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [lessons, setLessons] = useState([]);
 
   const load = async () => {
-    setLoading(true);
     try {
+      setErr("");
+      setLoading(true);
+
+      // ✅ IMPORTANT: no uid param, no id param
       const { data } = await axiosSecure.get("/lessons/my");
-      setItems(data?.items || []);
-    } catch (err) {
-      toast.error(err?.response?.data?.message || err.message);
+      setLessons(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error(e);
+      setErr(e?.response?.data?.message || "Could not load my lessons");
     } finally {
       setLoading(false);
     }
@@ -27,91 +29,95 @@ export default function MyLessons() {
   }, []);
 
   const handleDelete = async (id) => {
-    const ok = confirm("Delete this lesson? This cannot be undone.");
+    const ok = confirm("Delete this lesson?");
     if (!ok) return;
 
     try {
       await axiosSecure.delete(`/lessons/${id}`);
-      toast.success("Deleted ✅");
-      setItems((p) => p.filter((x) => x._id !== id));
-    } catch (err) {
-      toast.error(err?.response?.data?.message || err.message);
+      await load();
+      alert("Lesson deleted ✅");
+    } catch (e) {
+      console.error(e);
+      alert(e?.response?.data?.message || "Delete failed");
     }
   };
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="max-w-5xl">
-      <div className="flex items-start justify-between gap-4">
+    <div className="max-w-6xl mx-auto p-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">My Lessons</h1>
-          <p className="text-slate-600 mt-1">Manage your lessons (edit / delete / view).</p>
+          <h1 className="text-2xl font-bold">My Lessons</h1>
+          <p className="text-slate-600">Manage your lessons (edit / delete / view).</p>
         </div>
-        <Link
-          to="/dashboard/add-lesson"
-          className="px-4 py-2 rounded-xl bg-black text-white font-semibold hover:opacity-90"
-        >
+
+        <Link to="/dashboard/add-lesson" className="rounded-xl bg-black px-4 py-2 text-white">
           + Add Lesson
         </Link>
       </div>
 
-      <div className="mt-6 bg-white border rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-12 gap-2 px-4 py-3 text-xs font-semibold text-slate-600 bg-slate-50">
-          <div className="col-span-5">Title</div>
-          <div className="col-span-2">Category</div>
-          <div className="col-span-2">Visibility</div>
-          <div className="col-span-1">Likes</div>
-          <div className="col-span-1">Saves</div>
-          <div className="col-span-1 text-right">Action</div>
+      {err && (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">
+          {err}
         </div>
+      )}
 
-        {items.length === 0 ? (
-          <div className="p-6 text-slate-600">No lessons yet. Create your first one.</div>
-        ) : (
-          items.map((l) => (
-            <div key={l._id} className="grid grid-cols-12 gap-2 px-4 py-4 border-t items-center">
-              <div className="col-span-5">
-                <p className="font-semibold text-slate-900">{l.title}</p>
-                <p className="text-xs text-slate-500">
-                  {l.tone} • {l.accessLevel}
-                </p>
-              </div>
+      <div className="mt-6 overflow-x-auto rounded-xl border bg-white">
+        <table className="min-w-full text-sm">
+          <thead className="bg-slate-50 text-slate-700">
+            <tr>
+              <th className="px-4 py-3 text-left">Title</th>
+              <th className="px-4 py-3 text-left">Category</th>
+              <th className="px-4 py-3 text-left">Visibility</th>
+              <th className="px-4 py-3 text-left">Access</th>
+              <th className="px-4 py-3 text-right">Action</th>
+            </tr>
+          </thead>
 
-              <div className="col-span-2 text-sm text-slate-700">{l.category}</div>
+          <tbody>
+            {lessons.length === 0 ? (
+              <tr>
+                <td className="px-4 py-6 text-slate-600" colSpan={5}>
+                  No lessons yet. Create your first one.
+                </td>
+              </tr>
+            ) : (
+              lessons.map((l) => (
+                <tr key={l._id} className="border-t">
+                  <td className="px-4 py-3 font-medium">{l.title}</td>
+                  <td className="px-4 py-3">{l.category}</td>
+                  <td className="px-4 py-3">{l.visibility}</td>
+                  <td className="px-4 py-3">{l.accessLevel}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-2">
+                      <Link
+                        to={`/lessons/${l._id}`}
+                        className="rounded-lg border px-3 py-1"
+                      >
+                        View
+                      </Link>
 
-              <div className="col-span-2">
-                <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700">
-                  {l.visibility}
-                </span>
-              </div>
+                      <Link
+                        to={`/dashboard/update-lesson/${l._id}`}
+                        className="rounded-lg border px-3 py-1"
+                      >
+                        Edit
+                      </Link>
 
-              <div className="col-span-1 text-sm text-slate-700">{l.likesCount || 0}</div>
-              <div className="col-span-1 text-sm text-slate-700">{l.favoritesCount || 0}</div>
-
-              <div className="col-span-1 flex justify-end gap-2">
-                <Link
-                  to={`/lessons/${l._id}`}
-                  className="px-3 py-2 rounded-xl border text-sm font-semibold hover:bg-slate-50"
-                >
-                  View
-                </Link>
-                <Link
-                  to={`/dashboard/update-lesson/${l._id}`}
-                  className="px-3 py-2 rounded-xl border text-sm font-semibold hover:bg-slate-50"
-                >
-                  Edit
-                </Link>
-                <button
-                  onClick={() => handleDelete(l._id)}
-                  className="px-3 py-2 rounded-xl bg-black text-white text-sm font-semibold hover:opacity-90"
-                >
-                  Del
-                </button>
-              </div>
-            </div>
-          ))
-        )}
+                      <button
+                        onClick={() => handleDelete(l._id)}
+                        className="rounded-lg bg-red-600 px-3 py-1 text-white"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

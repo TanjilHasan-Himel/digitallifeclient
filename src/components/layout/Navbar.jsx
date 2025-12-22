@@ -66,6 +66,11 @@ export default function Navbar() {
               <NavLink to="/dashboard/favorites" className={navLinkClass}>
                 Favorites
               </NavLink>
+              {me?.role === "admin" && (
+                <NavLink to="/dashboard/admin" className={navLinkClass}>
+                  Admin
+                </NavLink>
+              )}
             </>
           )}
 

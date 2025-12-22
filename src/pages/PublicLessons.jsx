@@ -7,7 +7,7 @@ import { CATEGORIES, TONES } from "../constants/lessonOptions";
 import LoadingSpinner from "../components/shared/LoadingSpinner";
 
 export default function PublicLessons() {
-  const { user } = useAuth();
+  const { user, me } = useAuth();
 
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
@@ -93,11 +93,20 @@ export default function PublicLessons() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Public Lessons</h1>
-          <p className="mt-2 text-slate-600">Browse real lessons shared by people.</p>
+          <p className="mt-2 text-slate-600">
+            Browse real lessons shared by people.
+            {!me?.isPremium && (
+              <span className="block mt-1 text-amber-600 text-sm font-medium">
+                ⚡ Upgrade to Premium to access all premium lessons
+              </span>
+            )}
+          </p>
         </div>
-        <Link to="/pricing" className="rounded-xl border px-4 py-2 hover:bg-slate-50">
-          Upgrade
-        </Link>
+        {!me?.isPremium && (
+          <Link to="/pricing" className="rounded-xl bg-amber-500 text-white px-4 py-2 hover:bg-amber-600">
+            ⚡ Upgrade
+          </Link>
+        )}
       </div>
 
       {/* Filters */}
@@ -153,8 +162,18 @@ export default function PublicLessons() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {lessons.map((l) => {
               const isSaved = favSet.has(String(l._id));
+              const locked = l.locked ?? (l.accessLevel === "Premium" && !me?.isPremium);
               return (
-                <div key={l._id} className="rounded-2xl border bg-white p-5">
+                <div key={l._id} className="relative rounded-2xl border bg-white p-5 overflow-hidden">
+                  {locked && (
+                    <div className="absolute inset-0 backdrop-blur-sm bg-white/50 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-3xl">🔒</div>
+                        <p className="mt-2 font-semibold">Premium Lesson – Upgrade to view</p>
+                        <Link to="/pricing" className="mt-3 inline-block rounded-xl bg-amber-500 text-white px-4 py-2 hover:bg-amber-600">Upgrade</Link>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
@@ -162,7 +181,9 @@ export default function PublicLessons() {
                         <span>•</span>
                         <span>{l.tone}</span>
                         <span>•</span>
-                        <span>{l.accessLevel}</span>
+                        <span className={l.accessLevel === "Premium" ? "text-amber-600 font-semibold" : ""}>
+                          {l.accessLevel === "Premium" ? "⚡ Premium" : "Free"}
+                        </span>
                       </div>
 
                       <h3 className="mt-3 text-xl font-bold text-slate-900 truncate">
@@ -170,7 +191,7 @@ export default function PublicLessons() {
                       </h3>
 
                       <p className="mt-2 text-slate-700">
-                        {(l.description || "").slice(0, 140)}...
+                        {locked ? "This is premium content." : (l.description || "").slice(0, 140) + "..."}
                       </p>
 
                       <div className="mt-3 flex items-center justify-between text-sm text-slate-600">

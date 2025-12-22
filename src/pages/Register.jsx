@@ -8,11 +8,12 @@ import axiosSecure from "../api/axiosSecure";
 
 export default function Register() {
   useTitle("Register | Digital Life Lessons");
-  const { createUser, updateUserProfile } = useAuth();
+  const { createUser, updateUserProfile, loginWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showPass, setShowPass] = useState(false);
   const navigate = useNavigate();
 
-  const isStrongPassword = (pass) => pass.length >= 6;
+  const isStrongPassword = (pass) => /^(?=.{6,}).*$/.test(pass);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -21,9 +22,11 @@ export default function Register() {
     const photoURL = form.photoURL.value.trim();
     const email = form.email.value.trim();
     const password = form.password.value;
+    const confirm = form.confirm.value;
 
     if (!name || !email || !password) return toast.error("Name, Email, Password লাগবে।");
     if (!isStrongPassword(password)) return toast.error("Password কমপক্ষে 6 character হতে হবে।");
+    if (password !== confirm) return toast.error("Passwords মিলছে না");
 
     try {
       setLoading(true);
@@ -91,10 +94,25 @@ export default function Register() {
 
           <div>
             <label className="text-sm font-medium">Password</label>
+            <div className="relative">
+              <input
+                name="password"
+                type={showPass ? "text" : "password"}
+                placeholder="Minimum 6 characters"
+                className="mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring pr-12"
+              />
+              <button type="button" onClick={() => setShowPass((s) => !s)} className="absolute right-2 top-2 text-sm text-slate-600">
+                {showPass ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Confirm Password</label>
             <input
-              name="password"
-              type="password"
-              placeholder="Minimum 6 characters"
+              name="confirm"
+              type={showPass ? "text" : "password"}
+              placeholder="Re-type password"
               className="mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring"
             />
           </div>
@@ -106,6 +124,30 @@ export default function Register() {
             {loading ? "Creating..." : "Create account"}
           </button>
         </form>
+
+        <div className="my-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs text-slate-500">OR</span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <button
+          onClick={async () => {
+            try {
+              setLoading(true);
+              await loginWithGoogle();
+              // backend upsert happens via AuthProvider onAuthStateChanged
+              navigate("/", { replace: true });
+            } catch (e) {
+              toast.error(e?.message || "Google sign-in failed");
+            } finally {
+              setLoading(false);
+            }
+          }}
+          className="w-full rounded-xl border py-2 font-medium hover:bg-slate-50"
+        >
+          Continue with Google
+        </button>
 
         <p className="mt-4 text-sm text-gray-600">
           Already have an account?{" "}

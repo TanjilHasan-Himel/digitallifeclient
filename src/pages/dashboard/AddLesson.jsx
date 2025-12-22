@@ -1,8 +1,11 @@
 import { useState } from "react";
 import axiosSecure from "../../api/axiosSecure";
+import useAuth from "../../hooks/useAuth";
 import { CATEGORIES, TONES } from "../../constants/lessonOptions";
+import { Link } from "react-router-dom";
 
 export default function AddLesson() {
+  const { me } = useAuth();
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -63,10 +66,19 @@ export default function AddLesson() {
             <option value="Private">Private</option>
           </select>
 
-          <select name="accessLevel" className="border p-3 rounded" defaultValue="Free">
-            <option value="Free">Free</option>
-            <option value="Premium">Premium</option>
-          </select>
+          <div>
+            <select name="accessLevel" className="border p-3 rounded" defaultValue="Free">
+              <option value="Free">Free</option>
+              <option value="Premium" disabled={!me?.isPremium}>
+                {me?.isPremium ? "⚡ Premium" : "Premium (Upgrade Required)"}
+              </option>
+            </select>
+            {!me?.isPremium && (
+              <Link to="/pricing" className="inline-block mt-2 text-sm text-amber-600 hover:text-amber-700 font-medium">
+                ⚡ Upgrade to create premium lessons
+              </Link>
+            )}
+          </div>
         </div>
 
         <button disabled={loading} className="bg-black text-white py-3 rounded font-semibold">

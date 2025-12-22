@@ -90,17 +90,45 @@ export default function AuthProvider({ children }) {
     setMe(data);
     return data;
   };
+  // Compatibility helpers for pages using different naming
+  const createUser = async (email, password) => {
+    return await registerUser(email, password);
+  };
+
+  const updateUserProfile = async (name, photoURL) => {
+    if (!auth.currentUser) return null;
+    await updateProfile(auth.currentUser, {
+      displayName: name || auth.currentUser.displayName || "User",
+      photoURL: photoURL || auth.currentUser.photoURL || "",
+    });
+    // Optionally sync to backend and refresh cached profile
+    try {
+      await axiosSecure.post("/users/upsert", {
+        uid: auth.currentUser.uid,
+        email: auth.currentUser.email,
+        name: name || auth.currentUser.displayName || "User",
+        photoURL: photoURL || auth.currentUser.photoURL || "",
+      });
+      await refreshMe();
+    } catch {
+      /* ignore */
+    }
+  };
 
   const value = useMemo(
     () => ({
       user,
       me,
       loading,
+      isPremium: me?.isPremium || false,
       registerUser,
       loginUser,
       loginWithGoogle,
       logoutUser,
       refreshMe,
+      // compatibility
+      createUser,
+      updateUserProfile,
     }),
     [user, me, loading]
   );

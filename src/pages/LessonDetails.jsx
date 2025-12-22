@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 import axiosSecure from "../api/axiosSecure";
 
 export default function LessonDetails() {
   const { id } = useParams();
+  const { me } = useAuth();
   const [lesson, setLesson] = useState(null);
   const [comments, setComments] = useState([]);
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
+  const [reporting, setReporting] = useState(false);
 
   const loadAll = async () => {
     setErr("");
@@ -44,13 +47,45 @@ export default function LessonDetails() {
     }
   };
 
+  const reportLesson = async () => {
+    if (!lesson) return;
+    const reason = prompt("Report reason?");
+    if (!reason || !reason.trim()) return;
+    try {
+      setReporting(true);
+      await axiosSecure.post(`/lessons/${id}/report`, { reason });
+      alert("Reported. Thanks for helping keep the community safe.");
+    } catch (e) {
+      alert(e?.response?.data?.message || "Report failed");
+    } finally {
+      setReporting(false);
+    }
+  };
+
   if (err) {
+    const isPremiumError = err.toLowerCase().includes("premium");
     return (
       <div className="max-w-4xl mx-auto p-6">
-        <p className="text-red-600">{err}</p>
-        <Link to="/pricing" className="inline-block mt-4 px-4 py-2 bg-black text-white rounded">
-          Upgrade
-        </Link>
+        <div className={`rounded-2xl border p-8 text-center ${isPremiumError ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200"}`}>
+          <div className="text-5xl mb-4">{isPremiumError ? "⚡" : "❌"}</div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">
+            {isPremiumError ? "Premium Content" : "Access Denied"}
+          </h2>
+          <p className={`mb-6 ${isPremiumError ? "text-amber-700" : "text-red-600"}`}>{err}</p>
+          {isPremiumError && (
+            <div className="mb-6 text-slate-700">
+              <p className="font-medium mb-2">Upgrade to Premium to unlock:</p>
+              <ul className="text-left max-w-xs mx-auto space-y-2">
+                <li>✅ Access all premium lessons</li>
+                <li>✅ Create premium content</li>
+                <li>✅ Priority support</li>
+              </ul>
+            </div>
+          )}
+          <Link to="/pricing" className="inline-block px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 font-semibold">
+            {isPremiumError ? "⚡ Upgrade to Premium" : "Go to Pricing"}
+          </Link>
+        </div>
       </div>
     );
   }
@@ -59,13 +94,28 @@ export default function LessonDetails() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold">{lesson.title}</h1>
-      <p className="text-slate-600 mt-2">
-        {lesson.category} • {lesson.tone} • {lesson.accessLevel} • by {lesson.ownerName || "Unknown"}
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">{lesson.title}</h1>
+          <p className="text-slate-600 mt-2">
+            {lesson.category} • {lesson.tone} • 
+            <span className={lesson.accessLevel === "Premium" ? "text-amber-600 font-semibold" : ""}>
+              {lesson.accessLevel === "Premium" ? "⚡ Premium" : "Free"}
+            </span> • by {lesson.ownerName || "Unknown"}
+          </p>
+        </div>
+      </div>
 
       <div className="mt-5 border rounded p-4 bg-white">
         <p className="whitespace-pre-wrap">{lesson.description}</p>
+      </div>
+
+      <div className="mt-4 flex justify-end gap-2">
+        {me?.uid && me?.uid !== lesson.ownerUid && (
+          <button disabled={reporting} onClick={reportLesson} className="rounded-xl border px-4 py-2 hover:bg-slate-50">
+            {reporting ? "Reporting..." : "Report lesson"}
+          </button>
+        )}
       </div>
 
       <div className="mt-8">

@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import PrivateRoute from "./PrivateRoute";
+import AdminRoute from "./AdminRoute";
 
 import Home from "../pages/Home";
 import PublicLessons from "../pages/PublicLessons";
@@ -20,6 +21,11 @@ import MyLessons from "../pages/dashboard/MyLessons";
 import Favorites from "../pages/dashboard/Favorites";
 import Profile from "../pages/dashboard/Profile";
 import UpdateLesson from "../pages/dashboard/UpdateLesson";
+import AdminHome from "../pages/dashboard/admin/AdminHome";
+import ManageUsers from "../pages/dashboard/admin/ManageUsers";
+import ManageLessons from "../pages/dashboard/admin/ManageLessons";
+import ReportedLessons from "../pages/dashboard/admin/ReportedLessons";
+import AdminProfile from "../pages/dashboard/admin/AdminProfile";
 
 const router = createBrowserRouter([
   {
@@ -68,6 +74,21 @@ const router = createBrowserRouter([
       { path: "favorites", element: <Favorites /> },
       { path: "profile", element: <Profile /> },
       { path: "update-lesson/:id", element: <UpdateLesson /> },
+      {
+        path: "admin",
+        element: (
+          <AdminRoute>
+            <div />
+          </AdminRoute>
+        ),
+        children: [
+          { index: true, element: <AdminHome /> },
+          { path: "manage-users", element: <ManageUsers /> },
+          { path: "manage-lessons", element: <ManageLessons /> },
+          { path: "reported-lessons", element: <ReportedLessons /> },
+          { path: "profile", element: <AdminProfile /> },
+        ],
+      },
     ],
   },
 ]);

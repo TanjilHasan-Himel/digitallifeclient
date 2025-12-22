@@ -15,7 +15,7 @@ export default function DashboardHome() {
         setLoading(true);
         setErr("");
         const res = await axiosSecure.get("/dashboard/summary");
-        if (!ignore) setData(res.data);
+        if (!ignore) setData(res.data || {});
       } catch (e) {
         console.error(e);
         if (!ignore) setErr("Could not load dashboard summary.");
@@ -42,12 +42,12 @@ export default function DashboardHome() {
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <StatCard title="My Lessons" value={data?.stats?.myLessons ?? 0} />
-          <StatCard title="Public Lessons" value={data?.stats?.myPublicLessons ?? 0} />
-          <StatCard title="Premium Lessons" value={data?.stats?.myPremiumLessons ?? 0} />
-          <StatCard title="Weekly Lessons" value={data?.stats?.myWeeklyLessons ?? 0} />
-          <StatCard title="Favorites" value={data?.stats?.myFavorites ?? 0} />
-          <StatCard title="Comments" value={data?.stats?.myComments ?? 0} />
+          <StatCard title="My Lessons" value={data?.myLessons ?? 0} />
+          <StatCard title="Public Lessons" value={data?.publicLessons ?? 0} />
+          <StatCard title="Premium Lessons" value={data?.premiumLessons ?? 0} />
+          <StatCard title="Weekly Lessons" value={data?.weeklyLessons ?? 0} />
+          <StatCard title="Favorites" value={data?.favorites ?? 0} />
+          <StatCard title="Comments" value={data?.comments ?? 0} />
         </div>
       )}
     </div>
